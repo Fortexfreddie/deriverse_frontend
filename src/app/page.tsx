@@ -1,65 +1,89 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useEffect } from 'react'
+import { DashboardLayout } from '@/components/DashboardLayout'
+import { KPICards } from '@/components/dashboard/KPICards'
+import { PositionsTable } from '@/components/dashboard/PositionsTable'
+import { PnLChart } from '@/components/dashboard/PnLChart'
+import { SessionPerformance } from '@/components/dashboard/SessionPerformance'
+import { EngineLog } from '@/components/dashboard/EngineLog'
+import { useAnalytics } from '@/hooks/use-analytics'
+
+export default function Dashboard() {
+  const { 
+    dashboardData, 
+    analyticsData, 
+    isLoading: isAnalyticsLoading 
+  } = useAnalytics()
+
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Transform Analytics Data for KPICards
+  const kpiData = analyticsData ? {
+    unrealizedPnl: `$${analyticsData.totalPnl.unrealized.toFixed(2)}`,
+    realizedPnl: `$${analyticsData.totalPnl.realized.toFixed(2)}`,
+    marginUsage: '45.2%', // Mock or calc if available
+    accountHealth: 92,    // Mock or calc if available
+  } : undefined
+
+  // Transform Dashboard Data for PositionsTable
+  const positionsData = dashboardData.map(pos => ({
+    id: pos.positionId,
+    instrument: pos.market,
+    side: pos.side,
+    size: pos.size,
+    entryPrice: pos.entry,
+    markPrice: pos.current,
+    pnl: pos.unrealized
+  }))
+
+
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <DashboardLayout title="DASHBOARD // POSITIONS">
+      {/* Dashboard Grid */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0 h-full">
+        {/* Left Content Area - Full width on mobile */}
+        <div className="flex-1 flex flex-col bg-background w-full overflow-y-auto custom-scrollbar min-h-0">
+          {/* KPI Cards */}
+          <div className={`transition-all duration-700 ease-out ${isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+            <KPICards data={kpiData} />
+          </div>
+
+          {/* Positions Table */}
+          <div className={`transition-all duration-700 ease-out delay-100 ${isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+            <PositionsTable positions={positionsData} />
+          </div>
+
+          {/* PnL Chart */}
+          <div className={`transition-all duration-700 ease-out delay-200 ${isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+            <PnLChart />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Right Sidebar - Hidden on mobile/tablet, visible on lg+ */}
+        <div className={`hidden lg:flex lg:flex-col lg:w-80 bg-card flex-shrink-0 border-l border-border overflow-hidden transition-all duration-700 ease-out ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+          {/* Session Performance Header */}
+          <header className="h-10 flex items-center px-4 font-mono text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/20 border-b border-border flex-shrink-0">
+            SESSION_PERFORMANCE
+          </header>
+
+          {/* Session Performance - Flex for scrolling */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <SessionPerformance />
+          </div>
+
+          {/* Live Engine Logs - Flex for scrolling */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar border-t border-border">
+            <EngineLog />
+          </div>
         </div>
-      </main>
-    </div>
-  );
+      </div>
+    </DashboardLayout>
+  )
 }

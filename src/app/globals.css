@@ -1,26 +1,186 @@
+/* stylelint-disable */
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Institutional Colors */
+  --color-mint: var(--gain-mint);
+  --color-pink: var(--loss-pink);
+  
+  /* Additional institutional mappings */
+  --color-pnl-gain: var(--gain-mint);
+  --color-pnl-gain-dim: #009688; /* Dimmer teal for hover */
+  --color-pnl-loss: var(--loss-pink);
+  --color-accent-pink: var(--loss-pink);
+
+  /* Fonts */
+  --font-mono: var(--font-mono-data);
+  --font-sans: var(--font-label);
+
+  /* Brutalist Radius */
+  --radius-lg: 0rem;
+  --radius-md: 0rem;
+  --radius-sm: 0rem;
+
+  /* Keyframes */
+  @keyframes live-pulse {
+    0%, 100% { border-left-color: transparent; }
+    50% { border-left-color: var(--gain-mint); }
+  }
+  @keyframes loss-pulse {
+    0%, 100% { border-left-color: transparent; }
+    50% { border-left-color: var(--loss-pink); }
+  }
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  @keyframes blinker {
+    50% { opacity: 0; }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
+
+  :root {
+    /* TYPOGRAPHY */
+    --font-mono-data: "JetBrains Mono", monospace;
+    --font-label: "Space Mono", monospace;
+
+    /* LIGHT THEME (PREMIUM COOL GRAY) */
+    --background: hsl(210 20% 98%); /* Cool White */
+    --foreground: hsl(222 47% 11%); /* Deep Navy Black */
+    --card: hsl(0 0% 100%); /* Pure White */
+    --card-foreground: hsl(222 47% 11%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(222 47% 11%);
+    --primary: hsl(222 47% 11%);
+    --primary-foreground: hsl(210 40% 98%);
+    --secondary: hsl(210 40% 96.1%);
+    --secondary-foreground: hsl(222 47% 11%);
+    --muted: hsl(210 40% 96.1%);
+    --muted-foreground: hsl(215 16% 47%);
+    --accent: hsl(210 40% 96.1%);
+    --accent-foreground: hsl(222 47% 11%);
+    --destructive: hsl(340 75% 45%);
+    --border: hsl(214 32% 91%); /* Soft Cool Gray */
+    --input: hsl(214 32% 91%);
+    --ring: hsl(222 47% 11%);
+
+    /* Institutional PnL (Light Mode) */
+    --gain-mint: #00BFA5; /* Deep Teal */
+    --loss-pink: #D81B60; /* Rich Magenta */
+
+    --radius: 0rem;
+  }
+
+  .dark {
+    /* DARK THEME (ORIGINAL PERFECT STATE) */
+    --background: hsl(0 0% 2%); /* #050505 */
+    --foreground: hsl(0 0% 91%);
+    --card: hsl(0 0% 5%); /* #0d0d0d */
+    --card-foreground: hsl(0 0% 91%);
+    --popover: hsl(0 0% 5%);
+    --popover-foreground: hsl(0 0% 91%);
+    --primary: hsl(160 100% 50%); /* #00FFC2 Mint */
+    --primary-foreground: hsl(0 0% 2%);
+    --secondary: hsl(0 0% 8%);
+    --secondary-foreground: hsl(0 0% 91%);
+    --muted: hsl(0 0% 8%);
+    --muted-foreground: hsl(0 0% 46%);
+    --accent: hsl(0 0% 8%);
+    --accent-foreground: hsl(0 0% 91%);
+    --destructive: hsl(340 100% 56%);
+    --border: hsl(0 0% 10%); /* #1A1A1A */
+    --input: hsl(0 0% 10%);
+    --ring: hsl(160 100% 50%);
+
+    /* Neon PnL (Dark Mode) */
+    --gain-mint: #00FFC2;
+    --loss-pink: #FF2079;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground transition-colors duration-200;
+    font-feature-settings: "tnum" on, "lnum" on;
+  }
 }
+
+@layer utilities {
+  .font-mono-data {
+    font-family: var(--font-mono-data);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .label-uppercase {
+    font-family: var(--font-label);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* 300ms Flash Animations */
+  .pulse-gain {
+    animation: live-pulse 0.3s ease-out forwards;
+  }
+  .pulse-loss {
+    animation: loss-pulse 0.3s ease-out forwards;
+  }
+
+  /* Brutalist Grid Pattern (Adapts to Theme) */
+  .bg-grid-pattern {
+    background-image: linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.05;
+  }
+
+  .scanline-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(0deg, transparent, var(--gain-mint), transparent);
+    opacity: 0.03;
+    animation: scanline 10s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Zero-waste Layout Utilities */
+  .gap-brutalist {
+    @apply gap-[4px] md:gap-[8px];
+  }
+  .p-brutalist {
+    @apply p-[4px] md:p-[8px];
+  }
+}
+
