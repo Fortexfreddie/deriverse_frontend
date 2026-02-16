@@ -15,6 +15,7 @@ export function Sidebar({ activeNav, onNavChange }: SidebarProps) {
     { id: 'history', icon: History, label: 'History', href: '/history' },
     { id: 'analytics', icon: BarChart2, label: 'Analytics', href: '/analytics' },
     { id: 'journal', icon: BookOpen, label: 'Journal', href: '/journal' },
+    { id: 'settings', icon: Settings, label: 'Settings', href: '/settings' },
   ]
 
   return (

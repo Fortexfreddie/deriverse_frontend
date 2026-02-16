@@ -19,8 +19,175 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardLayout title="ANALYTICS // RISK_ENGINE">
-      {/* Dashboard Grid */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0 h-[calc(100vh-64px)] overflow-hidden">
+      
+      {/* Mobile Structure (Mobile Risk Engine) */}
+      <div className="flex flex-col md:hidden min-h-0 h-full overflow-y-auto custom-scrollbar pb-20 bg-background font-mono">
+        
+        {/* KPI Grid (3 cols) */}
+        <div className="p-2 grid grid-cols-3 gap-2">
+            <div className="bg-card border border-border p-2 rounded flex flex-col justify-between h-20 relative overflow-hidden group text-foreground">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-widest">PF</div>
+                <div className="text-xl text-primary font-bold">1.8</div>
+                <div className="text-[9px] text-muted-foreground">▲ 0.2</div>
+                <div className="absolute bottom-0 right-0 w-8 h-8 bg-primary/10 blur-xl"></div>
+            </div>
+            <div className="bg-card border border-border p-2 rounded flex flex-col justify-between h-20 relative overflow-hidden group text-foreground">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-widest">EXP</div>
+                <div className="text-xl text-foreground font-bold">0.35</div>
+                <div className="text-[9px] text-accent-pink">Risk: Hi</div>
+            </div>
+            <div className="bg-card border border-border p-2 rounded flex flex-col justify-between h-20 relative overflow-hidden group text-foreground">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-widest">WIN%</div>
+                <div className="text-xl text-foreground font-bold">62%</div>
+                <div className="w-full h-1 bg-muted rounded-full mt-1 overflow-hidden">
+                    <div className="h-full bg-primary w-[62%]"></div>
+                </div>
+            </div>
+        </div>
+
+        {/* Drawdown Chart */}
+        <div className="px-2 pb-2">
+            <div className="bg-card border border-border rounded p-3 relative h-40 flex flex-col">
+                <div className="flex justify-between items-start mb-2 z-10">
+                    <div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-widest">MAX_DRAWDOWN</div>
+                        <div className="text-2xl text-accent-pink font-bold leading-none mt-1">15.4%</div>
+                    </div>
+                    <div className="text-[9px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded border border-white/10">1D View</div>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 top-8 px-2 pb-2">
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 px-2 pb-2 pt-4">
+                        <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
+                        <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
+                        <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
+                    </div>
+                    {/* Simplified SVG Chart from user snippet */}
+                    <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 50">
+                        <defs>
+                            <linearGradient id="drawdownGradientMobile" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0%" stopColor="#FF2079" stopOpacity="0.25"></stop>
+                                <stop offset="100%" stopColor="#FF2079" stopOpacity="0"></stop>
+                            </linearGradient>
+                        </defs>
+                        <path d="M0,10 L10,12 L20,25 L30,22 L40,35 L50,30 L60,42 L70,38 L80,45 L90,40 L100,20 L100,50 L0,50 Z" fill="url(#drawdownGradientMobile)" stroke="none"></path>
+                        <path d="M0,10 L10,12 L20,25 L30,22 L40,35 L50,30 L60,42 L70,38 L80,45 L90,40 L100,20" fill="none" stroke="#FF2079" strokeWidth="1" vectorEffect="non-scaling-stroke"></path>
+                        <circle cx="40" cy="35" fill="#FF2079" r="1.5"></circle>
+                        <circle cx="80" cy="45" fill="#FF2079" r="1.5"></circle>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        {/* SOL-PERP Metrics Grid */}
+        <div className="px-2 pb-2">
+            <div className="border border-border rounded bg-card overflow-hidden">
+                <div className="h-8 border-b border-border flex items-center justify-between px-3 bg-black/20">
+                    <div className="flex items-center gap-2">
+                        {/* Placeholder Icon */}
+                        <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+                        <span className="text-[10px] text-foreground font-bold tracking-widest">SOL-PERP METRICS</span>
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 divide-x divide-y divide-border">
+                    <div className="p-3">
+                        <div className="text-[10px] text-muted-foreground mb-0.5">REALIZED PNL</div>
+                        <div className="text-sm text-primary font-bold">+$3,240.50</div>
+                    </div>
+                    <div className="p-3">
+                        <div className="text-[10px] text-muted-foreground mb-0.5">VOLUME (SOL)</div>
+                        <div className="text-sm text-foreground">42,050</div>
+                    </div>
+                    <div className="p-3">
+                        <div className="text-[10px] text-muted-foreground mb-0.5">AVG ENTRY</div>
+                        <div className="text-sm text-foreground">$141.20</div>
+                    </div>
+                    <div className="p-3">
+                        <div className="text-[10px] text-muted-foreground mb-0.5">FEES PAID</div>
+                        <div className="text-sm text-accent-pink">-$124.80</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Session Performance Bars */}
+        <div className="px-2 pb-2">
+            <div className="border border-border rounded bg-card p-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">SESSION_PERFORMANCE</div>
+                <div className="flex flex-col gap-3">
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-[10px] text-muted-foreground">ASIAN</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-primary font-bold">+$1,204</span>
+                                <span className="text-[9px] text-muted-foreground/80">4.2%</span>
+                            </div>
+                        </div>
+                        <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary/60 w-[45%]"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-[10px] text-muted-foreground">LONDON</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-foreground font-bold">+$892</span>
+                                <span className="text-[9px] text-muted-foreground/80">2.1%</span>
+                            </div>
+                        </div>
+                        <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary/40 w-[30%]"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-[10px] text-foreground font-bold flex items-center gap-1">
+                                NY SESSION <span className="w-1 h-1 bg-primary rounded-full animate-pulse"></span>
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-primary font-bold">+$3,420</span>
+                                <span className="text-[9px] text-muted-foreground/80">11.5%</span>
+                            </div>
+                        </div>
+                        <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary w-[78%]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Live Engine Logs (Mobile) */}
+        <div className="px-2 pb-4">
+            <div className="border border-border rounded bg-black p-3 font-mono text-[10px] h-32 overflow-y-auto custom-scrollbar">
+                <div className="sticky top-0 bg-black pb-2 border-b border-border mb-2 flex justify-between items-center">
+                    <span className="text-muted-foreground uppercase tracking-widest">&gt; LIVE_ENGINE_LOGS</span>
+                     <span className="w-1.5 h-1.5 bg-primary rounded-sm animate-pulse"></span>
+                </div>
+                <div className="flex flex-col gap-2 font-mono">
+                    <div className="text-muted-foreground">
+                        <span className="text-primary">[GET]</span> /api/analytics/sol_wallet_84f
+                        <div className="text-muted-foreground/60 pl-2 mt-0.5">Status: 200 OK (12ms)</div>
+                    </div>
+                     <div className="text-muted-foreground">
+                        <span className="text-primary">[WSS]</span> wss://feed.deriverse.io/risk
+                        <div className="text-muted-foreground/60 pl-2 mt-0.5">Subscription: CONFIRMED</div>
+                    </div>
+                     <div className="text-muted-foreground">
+                        <span className="text-accent-pink">[POST]</span> /api/risk/update_leverage
+                        <div className="text-muted-foreground/60 pl-2 mt-0.5">Payload: {"{ \"max\": \"5x\" }"}</div>
+                    </div>
+                     <div className="text-muted-foreground">
+                        <span className="text-primary">[GET]</span> /api/pnl/realized
+                        <div className="text-muted-foreground/60 pl-2 mt-0.5">Syncing...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      </div>
+
+      {/* Desktop Dashboard Grid (Original) */}
+      <div className="hidden md:flex flex-1 flex-col lg:flex-row gap-0 min-h-0 h-[calc(100vh-64px)] overflow-hidden">
         
         {/* Left Content Area */}
         <div className="flex-1 flex flex-col bg-background w-full overflow-y-auto custom-scrollbar min-h-0">
@@ -204,24 +371,6 @@ export default function AnalyticsPage() {
                 <div className="h-full bg-primary/40 w-[30%]"></div>
               </div>
             </div>
-
-            {/* NY SESSION */}
-            {/* <div className="border border-border rounded bg-background p-3 relative overflow-hidden">
-              <div className="absolute right-0 top-0 p-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block"></span>
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-mono text-foreground font-bold">NY SESSION (ACTIVE)</span>
-                <span className="text-[10px] font-mono text-muted-foreground/70">13:00 - 22:00 UTC</span>
-              </div>
-              <div className="flex items-end justify-between">
-                <div className="text-xl font-mono text-foreground">$3,420.00</div>
-                <div className="text-xs font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">+11.5%</div>
-              </div>
-              <div className="mt-3 h-1 w-full bg-border rounded-full overflow-hidden">
-                <div className="h-full bg-primary w-[78%]"></div>
-              </div>
-            </div> */}
 
             <div className="my-2 border-t border-border border-dashed"></div>
 

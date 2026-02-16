@@ -19,8 +19,192 @@ export default function JournalPage() {
 
   return (
     <DashboardLayout title="JOURNAL // ANALYSIS">
-      {/* Dashboard Grid - 3 Column Layout */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0 h-full overflow-hidden">
+      
+      {/* Mobile Structure (Mobile Dossier Hub) */}
+      <div className="flex flex-col md:hidden min-h-0 h-full overflow-y-auto custom-scrollbar pb-20 bg-background font-mono">
+        
+        {/* Position Context */}
+        <section className="border-b border-border p-4">
+            <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-white/10 border border-white/20 text-xs font-bold text-foreground">SOL-USDC</span>
+                    <span className="text-[10px] text-muted-foreground">PERPETUAL</span>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                    <span className="text-[9px] text-muted-foreground uppercase tracking-widest">AI_SCORE</span>
+                    <div className="flex gap-0.5">
+                        <div className="w-1.5 h-3 bg-primary"></div>
+                        <div className="w-1.5 h-3 bg-primary"></div>
+                        <div className="w-1.5 h-3 bg-primary"></div>
+                        <div className="w-1.5 h-3 bg-card border border-border"></div>
+                        <div className="w-1.5 h-3 bg-card border border-border"></div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Dossier Card */}
+            <div className="bg-card border border-border p-4 relative group mb-2">
+                <div className="absolute top-0 left-0 w-1 h-full bg-accent-pink"></div>
+                <div className="flex justify-between mb-3 items-start">
+                    <h2 className="text-xs font-bold text-foreground flex items-center gap-1">
+                        {/* Material Icon placeholder - folder_open */}
+                        <span className="text-primary text-sm">📂</span>
+                        POSITION_DOSSIER
+                    </h2>
+                    <span className="text-[9px] uppercase text-accent-pink tracking-widest border border-accent-pink/30 px-1.5 py-0.5 bg-accent-pink/10">ANXIOUS</span>
+                </div>
+                <div className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Entry Logic</div>
+                <p className="text-muted-foreground text-xs leading-relaxed font-mono">
+                    I entered this SOL trade because the 4H support looked strong at 138.5. FOMO kicked in when it reclaimed 140.
+                </p>
+                <div className="mt-3 pt-3 border-t border-border flex justify-between text-[10px] text-muted-foreground">
+                    <span>14:02 UTC</span>
+                    <span>400 SOL</span>
+                    <span>5x</span>
+                </div>
+            </div>
+        </section>
+
+        {/* Coach Intel */}
+        <section className="border-b border-border bg-card">
+            <div className="h-8 border-b border-border flex items-center px-4 bg-background justify-between">
+                <span className="text-[10px] uppercase text-primary tracking-widest font-bold">COACH_INTEL // TERMINAL</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+            </div>
+            <div className="p-4 bg-black/40">
+                <div className="font-mono text-xs text-primary leading-5">
+                    &gt; DETECTED PATTERN: FOMO_ENTRY<br/>
+                    &gt; BIAS: <span className="bg-primary text-black font-bold px-1">DENIAL</span><br/>
+                    &gt; INSIGHT: Misrepresenting trade status.
+                </div>
+            </div>
+        </section>
+
+        {/* What If Module */}
+        <section className="border-b border-border p-4 bg-background">
+            <div className="flex justify-between items-center mb-3">
+                <span className="text-[10px] font-bold text-primary flex items-center gap-1">
+                     {/* Material Icon placeholder - psychology_alt */}
+                    <span className="text-sm">🧠</span>
+                    WHAT_IF_MODULE
+                </span>
+            </div>
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide snap-x">
+                <div className="border border-border p-3 bg-card min-w-[140px] flex-1 snap-center">
+                    <div className="text-[9px] text-muted-foreground uppercase mb-1">Current Exit Plan</div>
+                    <div className="text-base text-foreground">148.00</div>
+                    <div className="text-[9px] text-primary mt-1">Est. PnL: +$3,200</div>
+                </div>
+                <div className="border border-accent-pink/30 p-3 bg-accent-pink/5 relative overflow-hidden min-w-[140px] flex-1 snap-center">
+                    <div className="text-[9px] text-accent-pink uppercase mb-1">Panic Exit</div>
+                    <div className="text-base text-foreground">125.50</div>
+                    <div className="text-[9px] text-accent-pink mt-1">Est. Loss: -$5,800</div>
+                    <div className="absolute -right-2 -bottom-2 text-accent-pink/10 text-4xl font-bold select-none">?</div>
+                </div>
+            </div>
+        </section>
+
+        {/* Chart Snapshot */}
+        <section className="border-b border-border">
+            <div className="h-8 border-b border-border flex items-center px-4 bg-card justify-between">
+                <span className="text-[10px] uppercase text-muted-foreground tracking-widest">CHART_SNAPSHOT</span>
+            </div>
+            <div className="w-full h-32 bg-background flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')]"></div>
+                {/* SVG Chart Placeholder - keeping simple */}
+                <svg className="w-full h-full p-2" viewBox="0 0 400 150">
+                    <path d="M0,100 L40,90 L80,110 L120,60 L160,80 L200,40 L240,50 L280,30 L320,70 L360,20 L400,40" fill="none" stroke="#00FFC2" strokeWidth="2"></path>
+                    <circle cx="160" cy="80" fill="#FF2079" r="4"></circle>
+                    <line stroke="#333" strokeDasharray="4" x1="0" x2="400" y1="80" y2="80"></line>
+                </svg>
+                <div className="absolute top-2 right-2 text-[9px] text-primary bg-primary/10 px-1 border border-primary/20 backdrop-blur-sm">ENTRY: 140.00</div>
+            </div>
+        </section>
+
+        {/* Trader Psyche */}
+        <section className="bg-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full border border-border p-0.5 relative flex-shrink-0">
+                    <div className="w-full h-full rounded-full bg-card overflow-hidden grayscale">
+                        {/* Placeholder Avatar */}
+                        <div className="w-full h-full bg-muted-foreground/20"></div>
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-foreground font-bold text-xs">THE DIP CHASER</h3>
+                    <span className="text-[9px] text-muted-foreground uppercase tracking-widest">Archetype</span>
+                </div>
+            </div>
+            
+            <div className="space-y-3 mb-4">
+                <div>
+                    <div className="flex justify-between text-[9px] mb-1">
+                        <span className="text-muted-foreground uppercase">Discipline</span>
+                        <span className="text-primary">65%</span>
+                    </div>
+                    <div className="w-full h-1 bg-black border border-border">
+                        <div className="h-full bg-primary w-[65%]"></div>
+                    </div>
+                </div>
+                <div>
+                    <div className="flex justify-between text-[9px] mb-1">
+                        <span className="text-muted-foreground uppercase">Patience</span>
+                        <span className="text-accent-pink">30%</span>
+                    </div>
+                    <div className="w-full h-1 bg-black border border-border">
+                        <div className="h-full bg-accent-pink w-[30%]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="border border-dashed border-border p-3 bg-black/50 relative mt-5">
+                <div className="absolute -top-2 left-2 bg-card px-1 text-[9px] text-primary border border-primary/20">LAST NUDGE</div>
+                <p className="text-xs text-muted-foreground font-mono italic pt-1">
+                    "Wait for the floor. You tend to buy the first red candle. Stop it."
+                </p>
+            </div>
+        </section>
+        
+         {/* Calendar Heatmap Section (Restored at bottom of mobile view as user requested to keep it) */}
+         <div className="p-4 border-t border-border bg-card/50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-mono text-muted-foreground uppercase tracking-widest">Performance Heatmap <span className="text-primary font-bold ml-2">FEB 2026</span></h2>
+              <div className="flex gap-2">
+                <button className="text-[10px] px-2 py-1 border border-border rounded hover:bg-muted text-muted-foreground transition">&lt;</button>
+                <button className="text-[10px] px-2 py-1 border border-border rounded hover:bg-muted text-muted-foreground transition">&gt;</button>
+              </div>
+            </div>
+            
+            {/* Heatmap Grid */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
+              {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map(day => (
+                <div key={day} className="text-[8px] sm:text-[10px] text-center text-muted-foreground mb-1">{day}</div>
+              ))}
+              {Array.from({ length: 28 }).map((_, i) => {
+                const day = i + 1
+                const isGreen = [2, 5, 8, 9, 12, 13, 15, 16, 20, 22, 23, 26, 27].includes(day)
+                const isRed = [3, 6, 10, 17, 24].includes(day)
+                const isToday = day === 15
+                
+                let bgClass = 'bg-muted/20'
+                if (isGreen) bgClass = 'bg-primary/20 border-primary/40 text-primary'
+                if (isRed) bgClass = 'bg-pink/20 border-pink/40 text-pink'
+                if (isToday) bgClass += ' ring-1 ring-foreground'
+
+                return (
+                  <div key={i} className={`aspect-square border border-transparent rounded-sm flex items-center justify-center text-[10px] sm:text-xs font-mono cursor-pointer hover:opacity-80 transition-all relative group ${bgClass}`}>
+                    {day}
+                    {isGreen && <span className="absolute bottom-0.5 right-0.5 w-1 h-1 bg-primary rounded-full"></span>}
+                    {isRed && <span className="absolute bottom-0.5 right-0.5 w-1 h-1 bg-pink rounded-full"></span>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+      </div>
+
+      {/* Desktop Dashboard Grid (Original) */}
+      <div className="hidden md:flex flex-1 flex-col lg:flex-row gap-0 min-h-0 h-full overflow-hidden">
         
         {/* COLUMN 1: Position Dossier & Heatmap (50%) */}
         <div className="flex-1 lg:basis-1/2 flex flex-col bg-background border-r border-border overflow-y-auto custom-scrollbar min-h-0 text-foreground">
@@ -217,7 +401,8 @@ export default function JournalPage() {
           <div className="p-6 flex flex-col items-center border-b border-border">
             <div className="w-20 h-20 rounded-full border-2 border-border p-1 mb-4 relative">
               <div className="w-full h-full rounded-full bg-card overflow-hidden grayscale">
-                <img alt="Profile" className="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOpupxhTAtsNVs-dIy56toqGiQxTF6BDlJ1ogI9JtEW2DRlKKd_Qe4wojijVpQgZRpATLeQ1wP-7JFKa_AFJ4WWya1oK2KxjbgnfeoNbK3ZxPCTHYaVVhMgS6DYFpwcbIe7qGhN5A_34b58uLxsAoSY37Ci5ovm71bBuhy9dGFb2xgcCcYSEC50SIExuhBhvs9T3yydGQOJTtgPeN6Lv4TArosf_X8mCHB1YnlebKNXzPWHojZbNWcCy9FCLvCuYE7WJ8Buk_N-Eg"/>
+                {/* Placeholder Avatar */}
+                <div className="w-full h-full bg-muted-foreground/20"></div>
               </div>
               <div className="absolute bottom-0 right-0 w-6 h-6 bg-background border border-border rounded-full flex items-center justify-center">
                 <span className="material-icons text-[10px] text-primary">verified</span>

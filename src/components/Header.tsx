@@ -46,64 +46,49 @@ export function Header({ title = 'DASHBOARD // POSITIONS', onMenuClick }: Header
 
   // Helper to truncate wallet address
   const truncateWallet = (address: string) => {
-    return `${address.slice(0, 4)}...${address.slice(-4)}`
+    return `${address.slice(0, 5)}...${address.slice(-4)}`
   }
 
   if (!mounted) return (
-    <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 sm:px-6 font-mono text-xs z-20 flex-shrink-0">
+    <header className="h-12 border-b border-border bg-background flex items-center justify-between px-3 z-30 flex-shrink-0 w-full">
        {/* Skeleton or empty state to prevent hydration mismatch */}
     </header>
   )
 
   return (
-    <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 sm:px-6 font-mono text-xs z-20 flex-shrink-0 transition-colors duration-300">
-      {/* Left Content */}
-      <div className="flex items-center gap-2 sm:gap-6 min-w-0">
-        {onMenuClick && (
-          <button
-            onClick={onMenuClick}
-            className="sm:hidden flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition"
-          >
-            <Menu size={18} />
-          </button>
-        )}
-        <h1 className="text-foreground font-bold tracking-widest text-[10px] sm:text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+    <header className="h-12 border-b border-border bg-background flex items-center justify-between px-3 z-30 flex-shrink-0 w-full transition-colors duration-300">
+      {/* Mobile / Tablet Left Content */}
+      <div className="flex flex-col justify-center">
+        <h1 className="text-foreground font-bold tracking-widest text-[11px] leading-tight">
           {title}
         </h1>
-        <div className="hidden sm:block h-4 w-px bg-border"></div>
-        <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
-          <span className="w-2 h-2 rounded-full bg-accent-pink animate-pulse"></span>
-          <span className="text-[9px] sm:text-xs">
-            DUMBO_MODE: <span className="text-accent-pink font-bold">ACTIVE</span>
-          </span>
+        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground mt-0.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent-pink animate-pulse"></span>
+          <span>DUMBO_MODE: <span className="text-accent-pink font-bold animate-pulse">ACTIVE</span></span>
         </div>
       </div>
 
-      {/* Right Content */}
-      <div className="flex items-center gap-2 sm:gap-4">
+      {/* Right Content (Wallet Only on Mobile, Theme + Wallet on Desktop) */}
+      <div className="flex items-center">
         <button
           onClick={toggleTheme}
-          className="hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded border border-border hover:border-foreground/50 transition text-muted-foreground hover:text-foreground group"
+          className="flex md:flex items-center gap-2 px-3 py-1.5 mr-2 rounded border border-border hover:border-foreground/50 transition text-muted-foreground hover:text-foreground group"
         >
           {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-          <span className="hidden md:inline text-[10px] uppercase">
-            {theme === 'dark' ? 'LIGHT' : 'DARK'}
-          </span>
         </button>
         
         <button 
           onClick={handleWalletClick}
-          className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 rounded transition shadow-[0_0_10px_rgba(0,255,196,0.1)] text-[9px] sm:text-xs border ${
+          className={`flex items-center gap-1.5 px-2 py-1 rounded transition border ${
             connected || wallet
-              ? "bg-pnl-gain/10 border-pnl-gain/50 hover:bg-pnl-gain/20 text-pnl-gain" 
-              : "bg-accent-blue/10 border-accent-blue/50 hover:bg-accent-blue/20 text-accent-blue"
+              ? "bg-primary/10 border-primary/50 text-primary" 
+              : "bg-muted/10 border-muted/50 text-muted-foreground"
           }`}
         >
-          <Wallet size={14} />
-          <span className="font-bold tracking-wide hidden sm:inline">
-            {(connected && publicKey) ? truncateWallet(publicKey.toBase58()) : (wallet ? truncateWallet(wallet) : "CONNECT WALLET")}
+          <Wallet size={12} />
+          <span className="font-bold tracking-wide text-[10px]">
+            {(connected && publicKey) ? truncateWallet(publicKey.toBase58()) : (wallet ? truncateWallet(wallet) : "CONNECT")}
           </span>
-          <ChevronRight size={14} className="sm:hidden" />
         </button>
       </div>
     </header>
