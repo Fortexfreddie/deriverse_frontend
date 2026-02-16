@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { Area, AreaChart, ResponsiveContainer, YAxis, XAxis, Tooltip } from 'recharts'
 
 interface PnLMetrics {
   cumulativePnl: string
@@ -13,6 +14,16 @@ interface PnLMetrics {
 interface PnLChartProps {
   metrics?: PnLMetrics
 }
+
+const mockData = [
+  { time: '00:00', value: 10 },
+  { time: '04:00', value: 15 },
+  { time: '08:00', value: 12 },
+  { time: '12:00', value: 25 },
+  { time: '16:00', value: 20 },
+  { time: '20:00', value: 35 },
+  { time: '23:59', value: 30 },
+]
 
 export function PnLChart({ metrics }: PnLChartProps) {
   const defaultMetrics: PnLMetrics = {
@@ -37,32 +48,31 @@ export function PnLChart({ metrics }: PnLChartProps) {
         {/* Chart Area */}
         <div className="w-full sm:w-2/3 border-b sm:border-b-0 sm:border-r border-border relative min-h-[150px] sm:min-h-auto">
           <div className="absolute inset-0 p-2 sm:p-4">
-            <svg
-              className="w-full h-full"
-              preserveAspectRatio="none"
-              viewBox="0 0 400 100"
-            >
-              {/* Chart Path */}
-              <path
-                d="M0,80 L20,75 L40,78 L60,70 L80,72 L100,60 L120,65 L140,50 L160,55 L180,45 L200,48 L220,40 L240,42 L260,35 L280,38 L300,25 L320,30 L340,20 L360,25 L380,15 L400,10"
-                fill="none"
-                stroke="var(--gain-mint)"
-                strokeWidth="1.5"
-                vectorEffect="non-scaling-stroke"
-              />
-              {/* Fill under curve */}
-              <path
-                d="M0,100 L0,80 L20,75 L40,78 L60,70 L80,72 L100,60 L120,65 L140,50 L160,55 L180,45 L200,48 L220,40 L240,42 L260,35 L280,38 L300,25 L320,30 L340,20 L360,25 L380,15 L400,10 L400,100 Z"
-                fill="url(#pnlGradient)"
-                stroke="none"
-              />
-              <defs>
-                <linearGradient id="pnlGradient" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="var(--gain-mint)" stopOpacity="0.1" />
-                  <stop offset="100%" stopColor="var(--gain-mint)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-            </svg>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={mockData}>
+                <defs>
+                  <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--gain-mint)" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="var(--gain-mint)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="time" hide />
+                <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  itemStyle={{ color: 'var(--foreground)' }}
+                  labelStyle={{ display: 'none' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="var(--gain-mint)" 
+                  fillOpacity={1} 
+                  fill="url(#pnlGradient)" 
+                  strokeWidth={1.5}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
 
           {/* Cumulative PnL Label */}

@@ -22,6 +22,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
     if (path.startsWith('/history')) return 'history'
     if (path.startsWith('/analytics')) return 'analytics'
     if (path.startsWith('/journal')) return 'journal'
+    if (path.startsWith('/settings')) return 'settings'
     return 'dashboard'
   }
 

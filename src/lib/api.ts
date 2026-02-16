@@ -314,6 +314,21 @@ export async function fetchBehavioralMetrics(wallet: string): Promise<Behavioral
     return fetchAPI<BehavioralMetrics>(`/analytics/${wallet}/behavior`);
 }
 
+export type HeatmapData = Record<string, number>;
+
+export async function fetchHeatmap(
+    wallet: string,
+    year?: number,
+    month?: number
+): Promise<HeatmapData> {
+    const params = new URLSearchParams();
+    if (year) params.append('year', String(year));
+    if (month) params.append('month', String(month));
+    const queryString = params.toString();
+    const endpoint = `/analytics/${wallet}/heatmap${queryString ? `?${queryString}` : ''}`;
+    return fetchAPI<HeatmapData>(endpoint);
+}
+
 // Journal
 
 export async function submitJournal(

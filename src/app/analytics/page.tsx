@@ -3,10 +3,31 @@
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { PageLoader } from '@/components/PageLoader'
+import { DrawdownChart } from '@/components/dashboard/DrawdownChart'
+import { MainAnalyticsChart } from '@/components/dashboard/MainAnalyticsChart'
 import { RefreshCcw } from 'lucide-react'
+
+import { DatePicker } from '@/components/ui/date-picker'
+import { CompositionChart } from '@/components/dashboard/CompositionChart'
+import { Heatmap } from '@/components/dashboard/Heatmap'
+import { Leaderboard } from '@/components/dashboard/Leaderboard'
+
+// Mock Data for Heatmap
+const mockHeatmapData = {
+    '2026-02-02': 120.5,
+    '2026-02-03': -50.2,
+    '2026-02-05': 200.0,
+    '2026-02-08': 45.0,
+    '2026-02-09': 150.0,
+    '2026-02-12': -80.0,
+    '2026-02-14': 300.0,
+    '2026-02-15': -20.0,
+}
 
 export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true)
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date('2026-02-01'))
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date('2026-02-09'))
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1200)
@@ -45,6 +66,27 @@ export default function AnalyticsPage() {
             </div>
         </div>
 
+        {/* Composition Chart (Mobile) */}
+         <div className="px-2 pb-2">
+            <div className="bg-card border border-border rounded p-3 h-64">
+                <CompositionChart />
+            </div>
+         </div>
+         
+         {/* Heatmap (Mobile) */}
+         <div className="px-2 pb-2">
+            <div className="bg-card border border-border rounded p-3">
+                <Heatmap data={mockHeatmapData} />
+            </div>
+         </div>
+
+         {/* Leaderboard (Mobile) */}
+         <div className="px-2 pb-2">
+            <div className="bg-card border border-border rounded p-3 h-64">
+                <Leaderboard />
+            </div>
+         </div>
+
         {/* Drawdown Chart */}
         <div className="px-2 pb-2">
             <div className="bg-card border border-border rounded p-3 relative h-40 flex flex-col">
@@ -61,19 +103,8 @@ export default function AnalyticsPage() {
                         <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
                         <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
                     </div>
-                    {/* Simplified SVG Chart from user snippet */}
-                    <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 50">
-                        <defs>
-                            <linearGradient id="drawdownGradientMobile" x1="0" x2="0" y1="0" y2="1">
-                                <stop offset="0%" stopColor="#FF2079" stopOpacity="0.25"></stop>
-                                <stop offset="100%" stopColor="#FF2079" stopOpacity="0"></stop>
-                            </linearGradient>
-                        </defs>
-                        <path d="M0,10 L10,12 L20,25 L30,22 L40,35 L50,30 L60,42 L70,38 L80,45 L90,40 L100,20 L100,50 L0,50 Z" fill="url(#drawdownGradientMobile)" stroke="none"></path>
-                        <path d="M0,10 L10,12 L20,25 L30,22 L40,35 L50,30 L60,42 L70,38 L80,45 L90,40 L100,20" fill="none" stroke="#FF2079" strokeWidth="1" vectorEffect="non-scaling-stroke"></path>
-                        <circle cx="40" cy="35" fill="#FF2079" r="1.5"></circle>
-                        <circle cx="80" cy="45" fill="#FF2079" r="1.5"></circle>
-                    </svg>
+                    {/* Drawdown Chart Component */}
+                    <DrawdownChart />
                 </div>
             </div>
         </div>
@@ -243,9 +274,9 @@ export default function AnalyticsPage() {
                       <div className="h-4 w-px bg-border"></div>
                       <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
                           <span>START:</span>
-                          <div className="bg-background border border-border px-2 py-1 text-foreground font-mono">2026-02-01</div>
+                          <DatePicker date={startDate} setDate={setStartDate} />
                           <span>END:</span>
-                          <div className="bg-background border border-border px-2 py-1 text-foreground font-mono">2026-02-09</div>
+                          <DatePicker date={endDate} setDate={setEndDate} />
                       </div>
                   </div>
                   
@@ -286,19 +317,28 @@ export default function AnalyticsPage() {
                 <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
                 <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
               </div>
-              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 300">
-                <defs>
-                  <linearGradient id="drawdownGradient" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#00ffc4" stopOpacity="0.1"></stop>
-                    <stop offset="100%" stopColor="#00ffc4" stopOpacity="0"></stop>
-                  </linearGradient>
-                </defs>
-                <path d="M0,250 L50,240 L100,220 L150,230 L200,180 L250,190 L300,150 L350,160 L400,120 L450,130 L500,100 L550,110 L600,80 L650,90 L700,60 L750,70 L800,40 L850,50 L900,20 L950,30 L1000,10 L1000,300 L0,300 Z" fill="url(#drawdownGradient)" stroke="none"></path>
-                <path d="M0,250 L50,240 L100,220 L150,230 L200,180 L250,190 L300,150 L350,160 L400,120 L450,130 L500,100 L550,110 L600,80 L650,90 L700,60 L750,70 L800,40 L850,50 L900,20 L950,30 L1000,10" fill="none" stroke="#00ffc4" strokeWidth="2" vectorEffect="non-scaling-stroke"></path>
-                <circle cx="200" cy="180" fill="#00ffc4" r="3"></circle>
-                <circle cx="600" cy="80" fill="#00ffc4" r="3"></circle>
-              </svg>
+              <MainAnalyticsChart />
             </div>
+          </div>
+
+          {/* NEW ROW: Heatmap & Composition & Leaderboard */}
+          <div className={`mx-4 mb-4 grid grid-cols-1 lg:grid-cols-12 gap-2 shrink-0 transition-all duration-700 ease-out delay-200 ${
+             isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
+          }`}>
+             {/* Heatmap (4 Cols) */}
+             <div className="lg:col-span-4 bg-card border border-border rounded p-4 h-[300px]">
+                 <Heatmap data={mockHeatmapData} />
+             </div>
+             
+             {/* Composition (4 Cols) */}
+             <div className="lg:col-span-4 bg-card border border-border rounded p-4 h-[300px]">
+                 <CompositionChart />
+             </div>
+
+             {/* Leaderboard (4 Cols) - Increased from 3 */}
+             <div className="lg:col-span-4 bg-card border border-border rounded p-4 h-[300px]">
+                 <Leaderboard />
+             </div>
           </div>
 
           {/* SOL-PERP Metrics */}

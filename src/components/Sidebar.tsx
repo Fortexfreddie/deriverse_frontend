@@ -37,9 +37,13 @@ export function Sidebar({ activeNav, onNavChange }: SidebarProps) {
                 ? 'bg-muted text-pnl-gain'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
-            title={item.label}
+            // title={item.label}
           >
             <item.icon size={20} />
+            {/* Tooltip */}
+            <div className="absolute left-14 hidden group-hover:block bg-(--bg-secondary) border border-(--border-subtle) px-2 py-1 text-xs text-(--text-primary) whitespace-nowrap z-50">
+              {item.label}
+            </div>
             {activeNav === item.id && (
               <div className="absolute left-0 w-0.5 h-full bg-pnl-gain rounded-r"></div>
             )}
@@ -49,9 +53,7 @@ export function Sidebar({ activeNav, onNavChange }: SidebarProps) {
 
       {/* Bottom Nav */}
       <div className="mt-auto flex flex-col gap-6 items-center w-full">
-        <button className="group w-10 h-10 flex items-center justify-center rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
-          <Settings size={20} />
-        </button>
+        {/* Settings moved to main nav */}
         <div className="w-8 h-8 rounded-full bg-pnl-gain/20 border border-pnl-gain/50 flex items-center justify-center text-xs font-mono text-pnl-gain font-bold">
           DV
         </div>
