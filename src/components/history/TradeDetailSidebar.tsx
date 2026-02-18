@@ -2,21 +2,11 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
-
-interface Trade {
-  id: string
-  timestamp: string
-  market: string
-  side: 'LONG' | 'SHORT'
-  price: string
-  size: string
-  fee: string
-  type: 'PERP' | 'SPOT'
-  signature: string
-}
+import { TradeEvent } from '@/lib/api'
+import { parsePositionId } from '@/lib/utils'
 
 interface TradeDetailSidebarProps {
-  trade: Trade | null
+  trade: TradeEvent | null
   isOpen: boolean
   onClose: () => void
 }
@@ -29,6 +19,10 @@ export function TradeDetailSidebar({ trade, isOpen, onClose }: TradeDetailSideba
   const [isSaving, setIsSaving] = useState(false)
 
   if (!trade) return null
+
+  const { market, side } = trade.position 
+    ? { market: trade.position.market, side: trade.position.side } 
+    : parsePositionId(trade.positionId)
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -79,16 +73,16 @@ export function TradeDetailSidebar({ trade, isOpen, onClose }: TradeDetailSideba
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-[9px] text-muted-foreground uppercase mb-1">Market</div>
-                <div className="text-sm font-bold text-foreground">{trade.market}</div>
+                <div className="text-sm font-bold text-foreground">{market}</div>
               </div>
               <div>
                 <div className="text-[9px] text-muted-foreground uppercase mb-1">Side</div>
                 <div
                   className={`text-sm font-bold ${
-                    trade.side === 'LONG' ? 'text-pnl-gain' : 'text-accent-pink'
+                    side === 'LONG' ? 'text-pnl-gain' : 'text-accent-pink'
                   }`}
                 >
-                  {trade.side}
+                  {side}
                 </div>
               </div>
             </div>
@@ -111,7 +105,7 @@ export function TradeDetailSidebar({ trade, isOpen, onClose }: TradeDetailSideba
               </div>
               <div>
                 <div className="text-[9px] text-muted-foreground uppercase mb-1">Type</div>
-                <div className="text-xs text-muted-foreground">{trade.type}</div>
+                <div className="text-xs text-muted-foreground">{trade.tradeType}</div>
               </div>
               <div>
                 <div className="text-[9px] text-muted-foreground uppercase mb-1">Time</div>

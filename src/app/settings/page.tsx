@@ -1,228 +1,245 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/DashboardLayout'
+import { PageLoader } from '@/components/PageLoader'
 import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Settings, Eye, EyeOff, Shield, Activity, Zap, Cpu, Bell, Volume2, UserCheck } from 'lucide-react'
 
 export default function SettingsPage() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [privacyMode, setPrivacyMode] = useState(false)
+  const [streamerMode, setStreamerMode] = useState(false)
+  const [aiPersona, setAiPersona] = useState<'risk_manager' | 'performance_coach' | 'degen_bro'>('risk_manager')
+  const [interventionLevel, setInterventionLevel] = useState(50)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1200)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (isLoading) {
+    return <PageLoader />
+  }
+
   return (
     <DashboardLayout title="DASHBOARD // CONFIGURATION">
       <div className="flex-1 flex overflow-hidden h-full">
         {/* Main Content - System Parameters */}
         <div className="flex-1 flex flex-col bg-background overflow-y-auto custom-scrollbar">
-          <div className="p-4 md:p-6">
-            <h2 className="font-mono text-xs text-primary uppercase tracking-widest mb-4 md:mb-6 flex items-center gap-2">
-              <span className="material-icons text-sm">dns</span>
-              SYSTEM_PARAMETERS
-            </h2>
+          <div className="p-4 md:p-6 w-full">
             
-            <div className="grid grid-cols-1 gap-4 md:gap-6 max-w-4xl">
-              
-              {/* RPC Configuration */}
-              <div className="bg-card border border-border rounded p-4 md:p-6">
-                <div className="flex items-center justify-between mb-4 border-b border-border pb-2">
-                  <h3 className="font-mono text-xs text-foreground uppercase font-bold">RPC_CONFIGURATION</h3>
-                  <span className="text-[10px] text-muted-foreground font-mono">LATENCY: 14ms</span>
-                </div>
-                <div className="space-y-4">
-                  <div className="group">
-                    <label className="block text-[10px] font-mono text-muted-foreground uppercase mb-1">Primary RPC URL</label>
-                    <div className="flex gap-2">
-                      <input 
-                        className="flex-1 bg-background border border-border text-foreground font-mono text-xs px-3 py-2 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder-muted-foreground" 
-                        type="text" 
-                        defaultValue="https://api.mainnet-beta.solana.com"
-                      />
-                      <button className="px-3 py-2 bg-primary/10 border border-primary/30 text-primary font-mono text-[10px] font-bold hover:bg-primary/20 transition-colors uppercase">
-                        Ping_Test
-                      </button>
+            <header className="mb-8 border-b border-border pb-4">
+               <h1 className="text-xl font-bold font-mono uppercase tracking-widest flex items-center gap-2">
+                 <Settings className="text-primary" size={20}/> System_Configuration
+               </h1>
+               <p className="text-xs text-muted-foreground mt-1 font-mono">Adjust terminal behavior, AI limits, and risk protocols.</p>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/* SECTION 1: INTERFACE PREFERENCES (Privacy/Streamer) */}
+              <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+                 <div className="flex items-center justify-between border-b border-border pb-2 mb-2">
+                    <h3 className="font-mono text-xs text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                      <Shield size={14} /> Interface_Preferences
+                    </h3>
+                 </div>
+
+                 {/* Privacy Mode */}
+                 <div className="flex items-center justify-between group">
+                    <div>
+                         <div className="flex items-center gap-2 mb-1">
+                             <div className="text-sm font-bold text-foreground">Privacy Mode</div>
+                             {privacyMode && <span className="bg-primary/20 text-primary text-[9px] px-1.5 py-0.5 rounded font-mono uppercase">Active</span>}
+                         </div>
+                         <div className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
+                           Blur sensitive values (PnL, Balance) for screenshots sharing.
+                         </div>
                     </div>
-                  </div>
-                  <div className="group">
-                    <label className="block text-[10px] font-mono text-muted-foreground uppercase mb-1">Backup RPC URL (Failover)</label>
-                    <div className="flex gap-2">
-                      <input 
-                        className="flex-1 bg-background border border-border text-muted-foreground font-mono text-xs px-3 py-2 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder-muted-foreground" 
-                        type="text" 
-                        defaultValue="https://solana-api.projectserum.com"
-                      />
-                      <button className="px-3 py-2 bg-card border border-border text-muted-foreground font-mono text-[10px] font-bold hover:text-foreground hover:border-foreground/50 transition-colors uppercase">
-                        Ping_Test
-                      </button>
+                    <Switch checked={privacyMode} onCheckedChange={setPrivacyMode} />
+                 </div>
+
+                 {/* Streamer Mode */}
+                 <div className="flex items-center justify-between group">
+                    <div>
+                         <div className="flex items-center gap-2 mb-1">
+                             <div className="text-sm font-bold text-foreground">Streamer Mode</div>
+                             {streamerMode && <span className="bg-accent-pink/20 text-accent-pink text-[9px] px-1.5 py-0.5 rounded font-mono uppercase">Live</span>}
+                         </div>
+                         <div className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
+                           Hide wallet address and transaction signatures from UI.
+                         </div>
                     </div>
-                  </div>
-                </div>
+                    <Switch checked={streamerMode} onCheckedChange={setStreamerMode} />
+                 </div>
               </div>
 
-              {/* Risk Controls */}
-              <div className="bg-card border border-border rounded p-4 md:p-6">
-                <div className="flex items-center justify-between mb-4 border-b border-border pb-2">
-                  <h3 className="font-mono text-xs text-foreground uppercase font-bold">RISK_CONTROLS</h3>
-                  <span className="text-[10px] text-accent-pink font-mono uppercase">Strict Mode</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div className="col-span-1 md:col-span-2">
-                    <div className="flex justify-between mb-2">
-                      <label className="text-[10px] font-mono text-muted-foreground uppercase">Max Leverage</label>
-                      <span className="text-[10px] font-mono text-primary">5x</span>
+
+              {/* SECTION 2: AI COACH CONFIGURATION */}
+              <div className="bg-card border border-border rounded-lg p-6 space-y-6 relative overflow-hidden">
+                 {/* Decorative background element */}
+                 <div className={`absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full pointer-events-none transition-opacity ${aiPersona === 'degen_bro' ? 'bg-pink-500/10' : ''}`} />
+
+                 <div className="flex items-center justify-between border-b border-border pb-2 mb-2 relative z-10">
+                    <h3 className="font-mono text-xs text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                      <Cpu size={14} /> AI_Coach_Logic
+                    </h3>
+                 </div>
+
+                 {/* Persona Selection */}
+                 <div className="space-y-3 relative z-10">
+                    <label className="text-xs font-bold text-foreground uppercase tracking-wide block">Persona Protocol</label>
+                    <div className="grid grid-cols-3 gap-2">
+                        <button 
+                            onClick={() => setAiPersona('risk_manager')}
+                            className={`p-3 rounded border text-left transition-all ${
+                                aiPersona === 'risk_manager' 
+                                ? 'bg-primary/10 border-primary text-primary shadow-sm' 
+                                : 'bg-background border-border text-muted-foreground hover:bg-muted/10'
+                            }`}
+                        >
+                            <div className="text-[10px] uppercase font-bold mb-1">Risk Manager</div>
+                            <div className="text-[9px] opacity-70 leading-tight">Focus on drawdowns & capital preservation.</div>
+                        </button>
+                        <button 
+                            onClick={() => setAiPersona('performance_coach')}
+                            className={`p-3 rounded border text-left transition-all ${
+                                aiPersona === 'performance_coach' 
+                                ? 'bg-primary/10 border-primary text-primary shadow-sm' 
+                                : 'bg-background border-border text-muted-foreground hover:bg-muted/10'
+                            }`}
+                        >
+                            <div className="text-[10px] uppercase font-bold mb-1">Performance</div>
+                            <div className="text-[9px] opacity-70 leading-tight">Balanced psych & technical advice.</div>
+                        </button>
+                        <button 
+                            onClick={() => setAiPersona('degen_bro')}
+                            className={`p-3 rounded border text-left transition-all ${
+                                aiPersona === 'degen_bro' 
+                                ? 'bg-pink-500/10 border-pink-500 text-pink-500 shadow-sm' 
+                                : 'bg-background border-border text-muted-foreground hover:bg-muted/10'
+                            }`}
+                        >
+                            <div className="text-[10px] uppercase font-bold mb-1">Degen Bro</div>
+                            <div className="text-[9px] opacity-70 leading-tight">High risk, high reward encouragement.</div>
+                        </button>
+                    </div>
+                 </div>
+
+                 {/* Intervention Volume */}
+                 <div className="space-y-4 relative z-10">
+                     <div className="flex justify-between">
+                        <label className="text-xs font-bold text-foreground uppercase tracking-wide block">Intervention Frequency</label>
+                        <span className="text-xs font-mono text-primary">{interventionLevel}%</span>
+                     </div>
+                     <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      value={interventionLevel} 
+                      onChange={(e) => setInterventionLevel(parseInt(e.target.value))}
+                      className="w-full h-1.5 bg-muted rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+                     />
+                     <div className="flex justify-between text-[9px] text-muted-foreground font-mono uppercase">
+                         <span>Passive</span>
+                         <span>Balanced</span>
+                         <span>Aggressive</span>
+                     </div>
+                 </div>
+              </div>
+
+
+              {/* SECTION 3: SYSTEM PARAMETERS (Realistic) */}
+              <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+                 <div className="flex items-center justify-between border-b border-border pb-2 mb-2">
+                    <h3 className="font-mono text-xs text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                      <Zap size={14} /> System_Parameters
+                    </h3>
+                 </div>
+
+                 {/* Explorer Selection */}
+                 <div className="group">
+                    <label className="block text-xs font-bold text-foreground uppercase mb-2">Block Explorer</label>
+                    <Select defaultValue="Solscan">
+                      <SelectTrigger className="w-full bg-background border-border font-mono text-sm text-muted-foreground">
+                        <SelectValue placeholder="Select Explorer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Solscan">Solscan (Recommended)</SelectItem>
+                        <SelectItem value="SolanaFM">SolanaFM</SelectItem>
+                        <SelectItem value="SolanaBeach">Solana Beach</SelectItem>
+                        <SelectItem value="XRAY">XRAY</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                        Used for external transaction links in history.
+                    </p>
+                 </div>
+
+                 {/* RPC Endpoint (Classic Realistic Setting) */}
+                 <div className="group">
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block text-xs font-bold text-foreground uppercase">RPC Endpoint</label>
+                        <span className="text-[9px] text-green-500 font-mono flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                            14ms
+                        </span>
                     </div>
                     <input 
-                      className="w-full appearance-none bg-transparent focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:rounded-none [&::-webkit-slider-runnable-track]:w-full [&::-webkit-slider-runnable-track]:h-0.5 [&::-webkit-slider-runnable-track]:bg-border [&::-webkit-slider-runnable-track]:cursor-pointer" 
-                      max="20" 
-                      min="1" 
-                      type="range" 
-                      defaultValue="5"
+                        type="text" 
+                        defaultValue="https://api.mainnet-beta.solana.com"
+                        className="w-full bg-background border border-border text-xs font-mono p-2.5 rounded  focus:border-primary outline-none text-muted-foreground"
                     />
-                    <div className="flex justify-between mt-1">
-                      <span className="text-[10px] font-mono text-muted-foreground">1x</span>
-                      <span className="text-[10px] font-mono text-muted-foreground">20x</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-mono text-muted-foreground uppercase mb-1">Daily Loss Limit (USD)</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2 text-muted-foreground font-mono text-xs">$</span>
-                      <input 
-                        className="w-full bg-background border border-border text-foreground font-mono text-xs pl-6 pr-3 py-2 focus:ring-1 focus:ring-accent-pink focus:border-accent-pink outline-none transition-all" 
-                        type="number" 
-                        defaultValue="5000"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-mono text-muted-foreground uppercase mb-1">Auto-Deleverage Threshold</label>
-                    <div className="relative">
-                      <input 
-                        className="w-full bg-background border border-border text-foreground font-mono text-xs px-3 py-2 focus:ring-1 focus:ring-accent-pink focus:border-accent-pink outline-none transition-all" 
-                        type="number" 
-                        defaultValue="85"
-                      />
-                      <span className="absolute right-3 top-2 text-muted-foreground font-mono text-xs">%</span>
-                    </div>
-                  </div>
-                </div>
+                 </div>
               </div>
 
-              {/* Notification Routing */}
-              <div className="bg-card border border-border rounded p-4 md:p-6">
-                <div className="flex items-center justify-between mb-4 border-b border-border pb-2">
-                  <h3 className="font-mono text-xs text-foreground uppercase font-bold">NOTIFICATION_ROUTING</h3>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+
+              {/* SECTION 4: NOTIFICATIONS */}
+              <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+                 <div className="flex items-center justify-between border-b border-border pb-2 mb-2">
+                    <h3 className="font-mono text-xs text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                      <Bell size={14} /> Data_Feeds
+                    </h3>
+                 </div>
+
+                 <div className="flex items-center justify-between group">
                     <div>
-                      <div className="text-[10px] font-mono text-foreground uppercase">Telegram Webhooks</div>
-                      <div className="text-[10px] text-muted-foreground">Receive alerts via bot API</div>
+                         <div className="flex items-center gap-2 mb-1">
+                             <div className="text-sm font-bold text-foreground">Telegram Webhook</div>
+                         </div>
+                         <div className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
+                           Push execution fills to private channel.
+                         </div>
                     </div>
-                    <Switch defaultChecked id="toggle-telegram" />
-                  </div>
-                  <div className="flex items-center justify-between">
+                    <Switch defaultChecked />
+                 </div>
+
+                 <div className="flex items-center justify-between group">
                     <div>
-                      <div className="text-[10px] font-mono text-foreground uppercase">Browser Alerts</div>
-                      <div className="text-[10px] text-muted-foreground">Native push notifications</div>
+                         <div className="flex items-center gap-2 mb-1">
+                             <div className="text-sm font-bold text-foreground">Browser Alerts</div>
+                         </div>
+                         <div className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
+                           Sound alerts on fill/SL hit.
+                         </div>
                     </div>
-                    <Switch id="toggle-browser" />
-                  </div>
-                </div>
+                    <Switch />
+                 </div>
               </div>
 
-            </div>
-          </div>
-        </div>
+            </div> {/* End Grid */}
 
-        {/* Right Panel - API Keys (Desktop Only) */}
-        <div className="hidden lg:flex w-[340px] border-l border-border bg-background flex-col flex-shrink-0">
-          <header className="h-12 border-b border-border flex items-center justify-between px-4 font-mono text-[10px] uppercase tracking-wider bg-card">
-            <span className="text-foreground font-bold leading-none">API_KEYS</span>
-            <button className="text-primary hover:text-foreground transition-colors flex items-center gap-1 group">
-              <span className="material-icons text-[14px] group-hover:rotate-90 transition-transform">add</span> NEW
-            </button>
-          </header>
-          
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-4">
-            
-            {/* API Key Item */}
-            <div className="border border-border rounded bg-card p-3 group hover:border-primary/30 transition-colors">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm text-muted-foreground">api</span>
-                  <span className="text-[10px] font-mono text-foreground font-bold">SOLANA_RPC_MAIN</span>
-                </div>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_5px_rgba(0,255,196,0.5)]"></span>
-              </div>
-              <div className="font-mono text-[10px] text-muted-foreground bg-background p-1.5 rounded border border-border mb-3 truncate">
-                sk_live_...93jK2
-              </div>
-              <div className="flex gap-2">
-                <button className="flex-1 py-1 text-[10px] font-mono border border-border hover:bg-foreground/5 rounded text-muted-foreground transition-colors flex items-center justify-center gap-1">
-                  <span className="material-icons text-[10px]">refresh</span> ROTATE
-                </button>
-                <button className="flex-1 py-1 text-[10px] font-mono border border-border hover:border-accent-pink hover:text-accent-pink hover:bg-accent-pink/5 rounded text-muted-foreground transition-colors flex items-center justify-center gap-1">
-                  <span className="material-icons text-[10px]">block</span> REVOKE
-                </button>
-              </div>
-            </div>
-
-            {/* API Key Item */}
-            <div className="border border-border rounded bg-card p-3 group hover:border-primary/30 transition-colors">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm text-muted-foreground">insights</span>
-                  <span className="text-[10px] font-mono text-foreground font-bold">DEX_SCREENER_PRO</span>
-                </div>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_5px_rgba(0,255,196,0.5)]"></span>
-              </div>
-              <div className="font-mono text-[10px] text-muted-foreground bg-background p-1.5 rounded border border-border mb-3 truncate">
-                ds_v1_...m2N9x
-              </div>
-              <div className="flex gap-2">
-                <button className="flex-1 py-1 text-[10px] font-mono border border-border hover:bg-foreground/5 rounded text-muted-foreground transition-colors flex items-center justify-center gap-1">
-                  <span className="material-icons text-[10px]">refresh</span> ROTATE
-                </button>
-                <button className="flex-1 py-1 text-[10px] font-mono border border-border hover:border-accent-pink hover:text-accent-pink hover:bg-accent-pink/5 rounded text-muted-foreground transition-colors flex items-center justify-center gap-1">
-                  <span className="material-icons text-[10px]">block</span> REVOKE
-                </button>
-              </div>
-            </div>
-
-            {/* API Key Item */}
-            <div className="border border-border rounded bg-card p-3 group hover:border-primary/30 transition-colors opacity-75">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm text-muted-foreground">visibility</span>
-                  <span className="text-[10px] font-mono text-muted-foreground font-bold">BIRDEYE_DATA</span>
-                </div>
-                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
-              </div>
-              <div className="font-mono text-[10px] text-muted-foreground bg-background p-1.5 rounded border border-border mb-3 truncate">
-                be_public_...x9P2
-              </div>
-              <div className="flex gap-2">
-                <button className="flex-1 py-1 text-[10px] font-mono border border-border hover:bg-foreground/5 rounded text-muted-foreground transition-colors flex items-center justify-center gap-1">
-                  <span className="material-icons text-[10px]">refresh</span> ROTATE
-                </button>
-                <button className="flex-1 py-1 text-[10px] font-mono border border-border hover:border-accent-pink hover:text-accent-pink hover:bg-accent-pink/5 rounded text-muted-foreground transition-colors flex items-center justify-center gap-1">
-                  <span className="material-icons text-[10px]">block</span> REVOKE
-                </button>
-              </div>
-            </div>
-
-            {/* Warning Box */}
-            <div className="my-2 border-t border-border border-dashed"></div>
-            <div className="p-3 bg-yellow-500/5 border border-yellow-500/20 rounded">
-              <div className="flex items-start gap-2">
-                <span className="material-icons text-yellow-500 text-sm mt-0.5">warning</span>
-                <p className="text-[10px] text-yellow-500/80 font-mono leading-tight">
-                    API Rate limits approaching 85% on DexScreener endpoint. Consider upgrading plan.
-                </p>
-              </div>
-            </div>
-            
-            {/* Factory Reset */}
-            <div className="mt-auto pt-4">
-              <button className="w-full bg-accent-pink hover:bg-red-600 text-white font-mono font-bold text-xs py-3 rounded flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-[0_0_15px_rgba(255,32,121,0.2)]">
-                <span className="material-icons text-sm">delete_forever</span>
-                FACTORY_RESET
-              </button>
+            {/* Footer / Danger Zone */}
+            <div className="mt-8 pt-8 border-t border-border flex justify-between items-center opacity-60 hover:opacity-100 transition-opacity">
+                 <div className="text-xs text-muted-foreground font-mono">
+                     Build: v3.2.1-beta <br/>
+                     Session: 8f92-xx-29a
+                 </div>
+                 <button className="text-[10px] text-red-500 hover:text-red-400 uppercase font-bold tracking-widest border border-red-900/30 hover:bg-red-900/10 px-4 py-2 rounded transition-colors">
+                     Reset_Factory_Defaults
+                 </button>
             </div>
 
           </div>

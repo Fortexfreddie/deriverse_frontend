@@ -1,61 +1,75 @@
 'use client'
 
 import React from 'react'
-
-interface Trade {
-  id: string
-  timestamp: string
-  market: string
-  side: 'LONG' | 'SHORT'
-  price: string
-  size: string
-  fee: string
-  type: 'PERP' | 'SPOT'
-  signature: string
-}
+import { TradeSummary } from '@/lib/api'
+import { motion } from 'framer-motion'
 
 interface HistoryMetricsProps {
-  trades: Trade[]
+  summary?: TradeSummary | null
 }
 
-export function HistoryMetrics({ trades }: HistoryMetricsProps) {
-  const totalTrades = trades.length
-  const totalFees = trades.reduce((sum, trade) => sum + parseFloat(trade.fee), 0)
-  const spotCount = trades.filter((t) => t.type === 'SPOT').length
-  const perpCount = trades.filter((t) => t.type === 'PERP').length
-  const spotPercent = totalTrades > 0 ? Math.round((spotCount / totalTrades) * 100) : 0
-  const perpPercent = totalTrades > 0 ? Math.round((perpCount / totalTrades) * 100) : 0
+export function HistoryMetrics({ summary }: HistoryMetricsProps) {
+  // Use summary data if available, otherwise 0/empty
+  const totalTrades = summary?.totalTrades || 0
+  const totalFees = summary?.totalFees || 0
+  const netVolume = summary?.netVolume24h || 0
+  const volumeChange = summary?.volumeChange24h || 0
+  
+  const spotPercent = summary?.distribution.spot || 0
+  const perpPercent = summary?.distribution.perp || 0
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+
+  const item = {
+    hidden: { opacity: 0, x: 20 },
+    show: { opacity: 1, x: 0 }
+  }
 
   return (
-    <div className="p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar flex-1">
+    <motion.div 
+      className="p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar flex-1"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-3">
         {/* Total Trades */}
-        <div className="border border-border bg-card p-3 relative group">
+        <motion.div variants={item} className="border border-border bg-card p-3 relative group">
           <div className="text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Total Trades</div>
           <div className="text-xl text-foreground font-bold">{totalTrades}</div>
           <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-pnl-gain opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        </div>
+        </motion.div>
 
         {/* Total Fees */}
-        <div className="border border-border bg-card p-3 relative group">
+        <motion.div variants={item} className="border border-border bg-card p-3 relative group">
           <div className="text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Total Fees</div>
-          <div className="text-xl text-foreground font-bold">${totalFees.toFixed(2)}</div>
+          <div className="text-xl text-foreground font-bold">${totalFees.toFixed(3)}</div>
           <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-accent-pink opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        </div>
+        </motion.div>
 
         {/* Net Volume */}
-        <div className="border border-border bg-card p-3 col-span-2 relative group">
+        <motion.div variants={item} className="border border-border bg-card p-3 col-span-2 relative group">
           <div className="flex justify-between items-start">
             <div className="text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Net Volume (24h)</div>
-            <div className="text-[9px] text-pnl-gain">+12.4%</div>
+            <div className={`text-[9px] ${volumeChange >= 0 ? 'text-pnl-gain' : 'text-accent-pink'}`}>
+              {volumeChange >= 0 ? '+' : ''}{volumeChange.toFixed(1)}%
+            </div>
           </div>
-          <div className="text-xl text-foreground font-bold">$1,240,502</div>
-        </div>
+          <div className="text-xl text-foreground font-bold">${netVolume.toLocaleString()}</div>
+        </motion.div>
       </div>
 
       {/* Trade Distribution */}
-      <div className="border border-border bg-card p-4">
+      <motion.div variants={item} className="border border-border bg-card p-4">
         <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Trade Distribution</div>
 
         {/* SPOT */}
@@ -77,7 +91,7 @@ export function HistoryMetrics({ trades }: HistoryMetricsProps) {
           <span className="text-muted-foreground">PERP</span>
           <span className="ml-auto font-bold text-foreground">{perpPercent}%</span>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

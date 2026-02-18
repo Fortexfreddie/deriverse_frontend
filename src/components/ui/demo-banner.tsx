@@ -15,7 +15,7 @@ import { useAnalytics } from "@/hooks/use-analytics"
 import { cn } from "@/lib/utils"
 
 export function DemoBanner() {
-  const { isDemoMode, updateWallet, error, disconnect } = useAnalytics()
+  const { isDemo, error } = useAnalytics()
   const { publicKey, connected, disconnect: walletDisconnect } = useWallet()
   const { setVisible } = useWalletModal()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -25,14 +25,7 @@ export function DemoBanner() {
     if (error) setIsExpanded(true)
   }, [error])
 
-  // Sync wallet adapter → useAnalytics
-  useEffect(() => {
-    if (connected && publicKey) {
-      updateWallet(publicKey.toBase58())
-    }
-  }, [connected, publicKey, updateWallet])
-
-  if (!isDemoMode && !error) return null
+  if (!isDemo && !error) return null
 
   const handleConnect = () => {
     setVisible(true) // Opens the wallet adapter modal
@@ -40,7 +33,6 @@ export function DemoBanner() {
 
   const handleDisconnect = () => {
     walletDisconnect() // Disconnect from wallet adapter
-    disconnect()       // Reset analytics to demo mode
   }
 
   // Unified color mapping for industrial consistency

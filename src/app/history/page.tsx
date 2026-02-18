@@ -1,135 +1,68 @@
 'use client'
 
+
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { HistoryTable } from '@/components/history/HistoryTable'
 import { HistoryMetrics } from '@/components/history/HistoryMetrics'
-import { AuditStream } from '@/components/history/AuditStream' // We might need to make this adaptable or create a MobileAuditStream
 import { PageLoader } from '@/components/PageLoader'
 import { TradeDetailSidebar } from '@/components/history/TradeDetailSidebar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { TradeEvent } from '@/lib/api'
+import { parsePositionId, formatDate } from '@/lib/utils'
+import { useTradeHistory } from '@/hooks/useTradeHistory'
+import { MARKET_MAP } from '@/lib/constants'
 
-interface Trade {
-  id: string
-  timestamp: string
-  market: string
-  side: 'LONG' | 'SHORT'
-  price: string
-  size: string
-  fee: string
-  type: 'PERP' | 'SPOT'
-  signature: string
-}
 
-const defaultTrades: Trade[] = [
-  {
-    id: '1',
-    timestamp: '2026-02-13 19:52:10',
-    market: 'SOL-USDC',
-    side: 'LONG',
-    price: '142.50 USDC',
-    size: '420.00 SOL',
-    fee: '0.05',
-    type: 'PERP',
-    signature: 'fWAn...3Uve',
-  },
-  {
-    id: '2',
-    timestamp: '2026-02-13 18:14:22',
-    market: 'BTC-USDC',
-    side: 'SHORT',
-    price: '68,420.00 USDC',
-    size: '2.50 BTC',
-    fee: '12.40',
-    type: 'PERP',
-    signature: '9xK2...Lp9M',
-  },
-  {
-    id: '3',
-    timestamp: '2026-02-13 15:30:05',
-    market: 'ETH-USDC',
-    side: 'LONG',
-    price: '3,210.55 USDC',
-    size: '15.00 ETH',
-    fee: '4.20',
-    type: 'SPOT',
-    signature: 'Qm8s...j7H2',
-  },
-  {
-    id: '4',
-    timestamp: '2026-02-12 22:15:00',
-    market: 'SOL-USDC',
-    side: 'SHORT',
-    price: '144.20 USDC',
-    size: '100.00 SOL',
-    fee: '0.02',
-    type: 'PERP',
-    signature: 'Tr3x...9BvC',
-  },
-  {
-    id: '5',
-    timestamp: '2026-02-12 14:05:33',
-    market: 'JUP-USDC',
-    side: 'LONG',
-    price: '1.24 USDC',
-    size: '15,000 JUP',
-    fee: '0.01',
-    type: 'SPOT',
-    signature: 'Kp9L...m5N2',
-  },
-  {
-    id: '6',
-    timestamp: '2026-02-12 09:12:45',
-    market: 'BONK-USDC',
-    side: 'SHORT',
-    price: '0.000024 USDC',
-    size: '50M BONK',
-    fee: '0.15',
-    type: 'PERP',
-    signature: 'Zx8Y...q2W1',
-  },
-  {
-    id: '7',
-    timestamp: '2026-02-11 23:59:11',
-    market: 'SOL-USDC',
-    side: 'LONG',
-    price: '138.90 USDC',
-    size: '250.00 SOL',
-    fee: '0.08',
-    type: 'PERP',
-    signature: 'Rv5T...s8K9',
-  },
-]
 
 export default function HistoryPage() {
 
   const [filterMarket, setFilterMarket] = useState('ALL_MARKETS')
   const [filterType, setFilterType] = useState('ALL_TYPES')
   const [currentPage, setCurrentPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null)
-  const [detailSidebarOpen, setDetailSidebarOpen] = useState(false)
+  const itemsPerPage = 10 // Increased from 7 to fill space better
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1200)
-    return () => clearTimeout(timer)
-  }, [])
+  const { trades, summary, total, isLoading: isTradesLoading } = useTradeHistory({
+      market: filterMarket === 'ALL_MARKETS' ? undefined : filterMarket,
+      limit: 100, // Fetch more to allow client-side filtering for Type
+      offset: 0 // For now, we fetch a batch and filter client side for better UX on small datasets
+  })
 
-  const handleTradeClick = (trade: Trade) => {
-    setSelectedTrade(trade)
-    setDetailSidebarOpen(true)
-  }
-
-  const itemsPerPage = 7
-  const filteredTrades = defaultTrades.filter((trade) => {
-    const marketMatch = filterMarket === 'ALL_MARKETS' || trade.market.includes(filterMarket)
-    const typeMatch = filterType === 'ALL_TYPES' || trade.type === filterType
-    return marketMatch && typeMatch
+  // Client-side filtering for Type (since API might not support it yet) and re-pagination
+  // In a real large-scale app, we'd pass all filters to the API.
+  const filteredTrades = trades.filter((trade) => {
+      // Market is already filtered by API if provided, but double check for safety
+      const marketMatch = filterMarket === 'ALL_MARKETS' || 
+          (trade.position?.market || parsePositionId(trade.positionId).market).includes(filterMarket)
+      const typeMatch = filterType === 'ALL_TYPES' || trade.tradeType === filterType
+      return marketMatch && typeMatch
   })
 
   const totalPages = Math.ceil(filteredTrades.length / itemsPerPage)
   const startIdx = (currentPage - 1) * itemsPerPage
   const paginatedTrades = filteredTrades.slice(startIdx, startIdx + itemsPerPage)
+
+  const [isLoading, setIsLoading] = useState(true)
+  const [selectedTrade, setSelectedTrade] = useState<TradeEvent | null>(null)
+  const [detailSidebarOpen, setDetailSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    // Sync local loading state with hook, but ensure at least 1.2s load for effect
+    if (!isTradesLoading) {
+        const timer = setTimeout(() => setIsLoading(false), 1200)
+        return () => clearTimeout(timer)
+    }
+    setIsLoading(true);
+  }, [isTradesLoading])
+
+  if (isLoading) {
+    return <PageLoader />
+  }
+
+  const handleTradeClick = (trade: TradeEvent) => {
+    setSelectedTrade(trade)
+    setDetailSidebarOpen(true)
+  }
 
   return (
     <DashboardLayout title="HISTORY // AUDIT">
@@ -177,53 +110,43 @@ export default function HistoryPage() {
         {/* Trade Entries */}
         <section className="px-3 pb-4 flex flex-col gap-2">
             <div className="text-[9px] text-muted-foreground uppercase tracking-widest pl-1 mb-1">TRADE_ENTRIES</div>
-            {paginatedTrades.map((trade) => (
-                <div key={trade.id} onClick={() => handleTradeClick(trade)} className="border border-border bg-card hover:bg-white/5 transition-colors p-3 flex flex-col gap-2 relative group cursor-pointer">
-                    <div className="flex justify-between items-center text-[10px] text-muted-foreground">
-                        <span className="font-bold text-foreground">{trade.market}</span>
-                        <span>{trade.timestamp}</span>
+            {paginatedTrades.map((trade) => {
+                const { market, side } = parsePositionId(trade.positionId)
+                
+                // Truncate market if it's too long (e.g. a public key)
+                const displayMarket = market.length > 12 ? `${market.slice(0, 4)}...${market.slice(-4)}` : market;
+                
+                return (
+                <div key={trade.id} onClick={() => handleTradeClick(trade)} className="border border-border bg-card hover:bg-white/5 transition-colors p-3 flex flex-col gap-2 relative group cursor-pointer overflow-hidden">
+                    <div className="flex justify-between items-center text-[9px] text-muted-foreground">
+                        <span className="font-bold text-foreground text-[10px] truncate max-w-[150px]">{displayMarket}</span>
+                        <span className="shrink-0">{formatDate(trade.timestamp)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase border ${trade.side === 'LONG' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-accent-pink/10 text-accent-pink border-accent-pink/20'}`}>
-                                {trade.side}
+                            <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase border ${side === 'LONG' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-accent-pink/10 text-accent-pink border-accent-pink/20'}`}>
+                                {side}
                             </span>
-                             <span className="text-[10px] text-muted-foreground border border-border px-1">{trade.type}</span>
+                             <span className="text-[9px] text-muted-foreground border border-border px-1">{trade.tradeType}</span>
                         </div>
-                        <div className="text-right">
-                             <div className="text-foreground font-bold text-xs">{trade.price}</div>
-                             <div className="text-[10px] text-muted-foreground">{trade.size}</div>
+                        <div className="text-right shrink-0">
+                             <div className="text-foreground font-bold text-xs">{trade.price.toFixed(2)}</div>
+                             <div className="text-[9px] text-muted-foreground uppercase">{trade.size.toFixed(4)} <span className="text-[8px] opacity-50">SIZE</span></div>
                         </div>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-border mt-1">
-                        <span className="text-[9px] text-muted-foreground font-mono">HASH: <span className="text-foreground/50">{trade.signature}</span></span>
-                        <span className="text-[9px] text-muted-foreground font-mono">FEE: {trade.fee}</span>
+                        <span className="text-[8px] text-muted-foreground font-mono flex-1 truncate mr-2">
+                            HASH: <span className="text-foreground/50">{trade.signature.slice(0, 8)}...{trade.signature.slice(-4)}</span>
+                        </span>
+                        <span className="text-[8px] text-muted-foreground font-mono shrink-0">FEE: {trade.fee.toFixed(4)}</span>
                     </div>
-                     <div className={`absolute left-0 top-0 bottom-0 w-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${trade.side === 'LONG' ? 'bg-primary' : 'bg-accent-pink'}`}></div>
+                     <div className={`absolute left-0 top-0 bottom-0 w-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${side === 'LONG' ? 'bg-primary' : 'bg-accent-pink'}`}></div>
                 </div>
-            ))}
+            )})}
         </section>
 
-        {/* System Audit Stream */}
-        <section className="px-3 pb-4">
-            <div className="border border-border bg-black p-3 font-mono text-[9px] min-h-[100px] flex flex-col justify-end">
-                <div className="text-muted-foreground border-b border-border pb-1 mb-2 flex justify-between">
-                    <span>SYSTEM_AUDIT_STREAM</span>
-                    <span className="text-primary animate-pulse">●</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                     <div className="text-muted-foreground animate-[typing_3.5s_steps(40,end)] overflow-hidden whitespace-nowrap">
-                        <p><span className="text-primary mr-1">[INFO]</span>Order filled: {paginatedTrades[0]?.price || 'N/A'}</p>
-                    </div>
-                    <div className="text-muted-foreground animate-[typing_3.5s_steps(40,end)] overflow-hidden whitespace-nowrap" style={{ animationDelay: '1s' }}>
-                        <p><span className="text-accent-pink mr-1">[WARN]</span>High slippage detected on #{paginatedTrades[1]?.id || 'N/A'}</p>
-                    </div>
-                     <div className="text-muted-foreground animate-[typing_3.5s_steps(40,end)] overflow-hidden whitespace-nowrap" style={{ animationDelay: '2s' }}>
-                        <p><span className="text-primary mr-1">[INFO]</span>Syncing block 240592...</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+        {/* Spacing */}
+        <div className="h-4"></div>
       </div>
 
       {/* Desktop Grid (Original) */}
@@ -242,13 +165,11 @@ export default function HistoryPage() {
                     <SelectTrigger className="w-[110px] h-7 text-[10px] bg-card border-border">
                       <SelectValue placeholder="MARKET" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px] overflow-y-auto">
                       <SelectItem value="ALL_MARKETS">ALL_MARKETS</SelectItem>
-                      <SelectItem value="SOL-USDC">SOL-USDC</SelectItem>
-                      <SelectItem value="BTC-USDC">BTC-USDC</SelectItem>
-                      <SelectItem value="ETH-USDC">ETH-USDC</SelectItem>
-                      <SelectItem value="JUP-USDC">JUP-USDC</SelectItem>
-                      <SelectItem value="BONK-USDC">BONK-USDC</SelectItem>
+                      {Object.values(MARKET_MAP).map((market) => (
+                        <SelectItem key={market} value={market}>{market}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -302,16 +223,12 @@ export default function HistoryPage() {
 
         {/* Right Sidebar - Hidden on mobile/tablet */}
         <div className="hidden lg:flex lg:flex-col lg:w-80 bg-card flex-shrink-0 border-l border-border overflow-hidden">
-          {/* Metrics Header */}
+          {/* History Metrics */}
           <header className="h-12 border-b border-border flex items-center px-4 font-mono text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/20 flex-shrink-0">
             HISTORY_METRICS
           </header>
+          <HistoryMetrics summary={summary} />
 
-          {/* History Metrics */}
-          <HistoryMetrics trades={filteredTrades} />
-
-          {/* Audit Stream */}
-          <AuditStream />
         </div>
       </div>
 

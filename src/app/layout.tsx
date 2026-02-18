@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next'
 import { ThemeProvider } from "@/components/theme-provider"
 import { SolanaWalletProvider } from "@/providers/solana-provider"
-import { AnalyticsProvider } from "@/hooks/use-analytics"
+
 import { BootLoaderWrapper } from '@/components/BootLoaderWrapper'
+import { QueryProvider } from "@/providers/query-provider"
 import './globals.css'
 
-// High-end Metadata for a "Million Dollar" feel
 export const metadata: Metadata = {
   title: {
     default: "Deriverse | Institutional Trading Analytics",
@@ -80,13 +80,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SolanaWalletProvider>
-            <AnalyticsProvider>
-              <BootLoaderWrapper>
-                {children}
-              </BootLoaderWrapper>
-            </AnalyticsProvider>
-          </SolanaWalletProvider>
+          <QueryProvider>
+            <SolanaWalletProvider>
+                <BootLoaderWrapper>
+                  {children}
+                </BootLoaderWrapper>
+            </SolanaWalletProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

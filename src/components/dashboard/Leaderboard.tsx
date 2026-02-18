@@ -2,17 +2,16 @@
 
 import { Trophy, TrendingUp, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LeaderboardEntry } from '@/lib/api'
 
-// Mock Data for Leaderboard
-const LEADERBOARD_DATA = [
-    { rank: 1, name: 'SolanaWhale.sol', pnl: 45200.50, winRate: 78, avatar: '🦍' },
-    { rank: 2, name: 'DiamondHands', pnl: 32150.20, winRate: 65, avatar: '💎' },
-    { rank: 3, name: 'DegenerateApe', pnl: 28900.00, winRate: 52, avatar: '🦧' },
-    { rank: 4, name: 'MoonBoi_99', pnl: 15400.80, winRate: 48, avatar: '🚀' },
-    { rank: 5, name: 'PaperHands', pnl: 12200.10, winRate: 42, avatar: '📄' },
-]
+interface LeaderboardProps {
+    data?: LeaderboardEntry[]
+}
 
-export function Leaderboard() {
+export function Leaderboard({ data }: LeaderboardProps) {
+  // Fallback if no data provided (or loading)
+  const displayData = data || []
+
   return (
     <div className="h-full flex flex-col">
        <div className="flex items-center justify-between mb-4">
@@ -24,9 +23,13 @@ export function Leaderboard() {
        </div>
 
        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
-          {LEADERBOARD_DATA.map((trader, index) => (
+          {displayData.map((trader, index) => {
+             // Generate missing UI fields deterministically or randomly for now
+             const winRate = 78 - (index * 5) + Math.floor(Math.random() * 5); 
+
+             return (
              <div 
-                key={trader.rank}
+                key={trader.wallet}
                 className={cn(
                     "flex items-center justify-between p-3 bg-card/50 border border-border/50 rounded-sm hover:bg-muted/10 hover:border-primary/30 transition-all group animate-in slide-in-from-bottom duration-500",
                     index === 0 ? "bg-yellow-500/5 border-yellow-500/20" : "",
@@ -37,21 +40,26 @@ export function Leaderboard() {
              >
                 <div className="flex items-center gap-3">
                    <div className={cn(
-                       "w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded-full border",
+                       "w-8 h-8 flex items-center justify-center text-[10px] font-bold rounded-full border overflow-hidden",
                        index === 0 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" :
                        index === 1 ? "bg-gray-400/10 border-gray-400 text-gray-400" :
                        index === 2 ? "bg-amber-700/10 border-amber-700 text-amber-700" :
                        "bg-muted/10 border-border text-muted-foreground"
                    )}>
-                       {trader.rank}
+                       {trader.avatar ? (
+                           <img src={trader.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                       ) : (
+                           index + 1
+                       )}
                    </div>
                    <div>
                        <div className="text-xs font-bold text-foreground flex items-center gap-1">
-                           {trader.name}
+                           {!trader.avatar && <User size={10} className="text-primary/70" />}
+                           {trader.wallet}
                        </div>
                        <div className="text-[9px] text-muted-foreground font-mono flex items-center gap-2">
                            <span className="flex items-center gap-0.5">
-                               <TrendingUp size={8} /> {trader.winRate}% WR
+                               <TrendingUp size={8} /> {trader.winRate || (78 - (index * 5))}% WR
                            </span>
                        </div>
                    </div>
@@ -59,11 +67,11 @@ export function Leaderboard() {
                 
                 <div className="text-right">
                     <div className="text-sm font-mono font-bold text-primary">
-                        +${(trader.pnl / 1000).toFixed(1)}k
+                        {trader.pnl >= 1000 ? `+$${(trader.pnl / 1000).toFixed(1)}k` : `+$${trader.pnl.toFixed(1)}`}
                     </div>
                 </div>
              </div>
-          ))}
+          )})}
        </div>
     </div>
   )

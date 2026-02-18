@@ -2,28 +2,32 @@
 
 import React from 'react'
 import { Area, AreaChart, ResponsiveContainer, YAxis, Tooltip } from 'recharts'
+import { HistoricalPnlData, DrawdownPoint } from '@/lib/api'
 
-const mockData = [
-  { time: '0', value: 10 },
-  { time: '1', value: 12 },
-  { time: '2', value: 25 },
-  { time: '3', value: 22 },
-  { time: '4', value: 35 },
-  { time: '5', value: 30 },
-  { time: '6', value: 42 },
-  { time: '7', value: 38 },
-  { time: '8', value: 45 },
-  { time: '9', value: 40 },
-  { time: '10', value: 20 },
-  { time: '11', value: 50 },
-  { time: '12', value: 50 },
+// Mock Data matching DrawdownPoint interface
+const mockData: DrawdownPoint[] = [
+    { timestamp: '2026-02-01', pnl: 0, drawdown: 5.2, peak: 0 },
+    { timestamp: '2026-02-02', pnl: 0, drawdown: 8.5, peak: 0 },
+    { timestamp: '2026-02-03', pnl: 0, drawdown: 12.4, peak: 0 },
+    { timestamp: '2026-02-04', pnl: 0, drawdown: 15.4, peak: 0 }, // Peak drawdown
+    { timestamp: '2026-02-05', pnl: 0, drawdown: 10.2, peak: 0 },
+    { timestamp: '2026-02-06', pnl: 0, drawdown: 8.1, peak: 0 },
+    { timestamp: '2026-02-07', pnl: 0, drawdown: 4.5, peak: 0 },
+    { timestamp: '2026-02-08', pnl: 0, drawdown: 2.1, peak: 0 },
+    { timestamp: '2026-02-09', pnl: 0, drawdown: 0.5, peak: 0 },
 ]
 
-export function DrawdownChart() {
+interface DrawdownChartProps {
+    data?: DrawdownPoint[]
+}
+
+export function DrawdownChart({ data }: DrawdownChartProps) {
+  const chartData = data || mockData;
+
   return (
     <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={mockData}>
+        <AreaChart data={chartData}>
           <defs>
             <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="var(--loss-pink)" stopOpacity={0.25}/>
@@ -35,10 +39,11 @@ export function DrawdownChart() {
             contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
             itemStyle={{ color: 'var(--foreground)' }}
             labelStyle={{ display: 'none' }}
+            formatter={(value?: number) => [`${value?.toFixed(1) ?? '0.0'}%`, 'Drawdown']}
           />
           <Area 
             type="monotone" 
-            dataKey="value" 
+            dataKey="drawdown" 
             stroke="var(--loss-pink)" 
             fillOpacity={1} 
             fill="url(#drawdownGradient)" 

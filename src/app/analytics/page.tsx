@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { PageLoader } from '@/components/PageLoader'
 import { DrawdownChart } from '@/components/dashboard/DrawdownChart'
@@ -11,57 +12,101 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { CompositionChart } from '@/components/dashboard/CompositionChart'
 import { Heatmap } from '@/components/dashboard/Heatmap'
 import { Leaderboard } from '@/components/dashboard/Leaderboard'
+import { SessionPerformance } from '@/components/dashboard/SessionPerformance'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-// Mock Data for Heatmap
-const mockHeatmapData = {
-    '2026-02-02': 120.5,
-    '2026-02-03': -50.2,
-    '2026-02-05': 200.0,
-    '2026-02-08': 45.0,
-    '2026-02-09': 150.0,
-    '2026-02-12': -80.0,
-    '2026-02-14': 300.0,
-    '2026-02-15': -20.0,
+import { useAnalytics } from '@/hooks/use-analytics'
+import { MARKET_MAP } from '@/lib/constants'
+
+
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
 }
 
 export default function AnalyticsPage() {
-  const [isLoading, setIsLoading] = useState(true)
+  const [filterMarket, setFilterMarket] = useState('ALL_MARKETS')
   const [startDate, setStartDate] = useState<Date | undefined>(new Date('2026-02-01'))
   const [endDate, setEndDate] = useState<Date | undefined>(new Date('2026-02-09'))
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1200)
-    return () => clearTimeout(timer)
-  }, [])
+  // Use the hook to fetch real data
+  const { 
+    data: analyticsData, 
+    heatmapData, 
+    leaderboardData, 
+    compositionData,
+    historicalPnlData,
+    drawdownData,
+    isLoading, 
+    refetch, 
+    isDemo 
+  } = useAnalytics({
+      market: filterMarket === 'ALL_MARKETS' ? undefined : filterMarket,
+      startDate,
+      endDate
+  })
 
-  if (isLoading) {
+  // Transform Session Performance for right sidebar
+  const sessionData = analyticsData ? Object.entries(analyticsData.sessionPerformance).map(([name, data]) => ({
+    name: name.toUpperCase() + ' SESSION',
+    status: (name === 'New York' ? 'ACTIVE' : 'CLOSED') as 'ACTIVE' | 'CLOSED',
+    pnl: `$${data.pnl.toFixed(2)}`,
+    return: `${data.pnl >= 0 ? '+' : ''}${((data.pnl / (analyticsData.totalPnl.total || 1)) * 100).toFixed(1)}%`
+  })) : undefined
+
+  // Min loader time for UX consistency
+  const [showLoader, setShowLoader] = useState(true)
+
+  useEffect(() => {
+    if (!isLoading) {
+        const timer = setTimeout(() => setShowLoader(false), 1200)
+        return () => clearTimeout(timer)
+    }
+    setShowLoader(true)
+  }, [isLoading])
+
+  if (showLoader) {
     return <PageLoader />
   }
+
+  // Helper to safely access market data, ensuring fallback if data is missing or structure changes
+  const solData = analyticsData?.marketPerformance?.['SOL-USDC'] || { pnl: 0, volume: 0, winRate: 0, tradeCount: 0 }
 
   return (
     <DashboardLayout title="ANALYTICS // RISK_ENGINE">
       
       {/* Mobile Structure (Mobile Risk Engine) */}
-      <div className="flex flex-col md:hidden min-h-0 h-full overflow-y-auto custom-scrollbar pb-20 bg-background font-mono">
+      <div className="flex flex-col md:hidden min-h-0 h-full overflow-y-auto custom-scrollbar pb-32 bg-background font-mono">
         
         {/* KPI Grid (3 cols) */}
         <div className="p-2 grid grid-cols-3 gap-2">
             <div className="bg-card border border-border p-2 rounded flex flex-col justify-between h-20 relative overflow-hidden group text-foreground">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-widest">PF</div>
-                <div className="text-xl text-primary font-bold">1.8</div>
+                <div className="text-xl text-primary font-bold">{analyticsData?.riskMetrics?.profitFactor?.toFixed(2) || '0.00'}</div>
                 <div className="text-[9px] text-muted-foreground">▲ 0.2</div>
                 <div className="absolute bottom-0 right-0 w-8 h-8 bg-primary/10 blur-xl"></div>
             </div>
             <div className="bg-card border border-border p-2 rounded flex flex-col justify-between h-20 relative overflow-hidden group text-foreground">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-widest">EXP</div>
-                <div className="text-xl text-foreground font-bold">0.35</div>
+                <div className="text-xl text-foreground font-bold">{analyticsData?.riskMetrics?.expectancy?.toFixed(2) || '0.00'}</div>
                 <div className="text-[9px] text-accent-pink">Risk: Hi</div>
             </div>
             <div className="bg-card border border-border p-2 rounded flex flex-col justify-between h-20 relative overflow-hidden group text-foreground">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-widest">WIN%</div>
-                <div className="text-xl text-foreground font-bold">62%</div>
+                <div className="text-xl text-foreground font-bold">{analyticsData?.winRate || 0}%</div>
                 <div className="w-full h-1 bg-muted rounded-full mt-1 overflow-hidden">
-                    <div className="h-full bg-primary w-[62%]"></div>
+                    <div className="h-full bg-primary" style={{ width: `${analyticsData?.winRate || 0}%` }}></div>
                 </div>
             </div>
         </div>
@@ -69,21 +114,21 @@ export default function AnalyticsPage() {
         {/* Composition Chart (Mobile) */}
          <div className="px-2 pb-2">
             <div className="bg-card border border-border rounded p-3 h-64">
-                <CompositionChart />
+                <CompositionChart data={compositionData} />
             </div>
          </div>
          
          {/* Heatmap (Mobile) */}
          <div className="px-2 pb-2">
             <div className="bg-card border border-border rounded p-3">
-                <Heatmap data={mockHeatmapData} />
+                <Heatmap data={heatmapData} />
             </div>
          </div>
 
          {/* Leaderboard (Mobile) */}
          <div className="px-2 pb-2">
             <div className="bg-card border border-border rounded p-3 h-64">
-                <Leaderboard />
+                <Leaderboard data={leaderboardData} />
             </div>
          </div>
 
@@ -93,7 +138,7 @@ export default function AnalyticsPage() {
                 <div className="flex justify-between items-start mb-2 z-10">
                     <div>
                         <div className="text-[10px] text-muted-foreground uppercase tracking-widest">MAX_DRAWDOWN</div>
-                        <div className="text-2xl text-accent-pink font-bold leading-none mt-1">15.4%</div>
+                        <div className="text-2xl text-accent-pink font-bold leading-none mt-1">{analyticsData?.riskMetrics?.maxDrawdown || 0}%</div>
                     </div>
                     <div className="text-[9px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded border border-white/10">1D View</div>
                 </div>
@@ -104,7 +149,7 @@ export default function AnalyticsPage() {
                         <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
                     </div>
                     {/* Drawdown Chart Component */}
-                    <DrawdownChart />
+                    <DrawdownChart data={drawdownData} />
                 </div>
             </div>
         </div>
@@ -122,11 +167,11 @@ export default function AnalyticsPage() {
                 <div className="grid grid-cols-2 divide-x divide-y divide-border">
                     <div className="p-3">
                         <div className="text-[10px] text-muted-foreground mb-0.5">REALIZED PNL</div>
-                        <div className="text-sm text-primary font-bold">+$3,240.50</div>
+                        <div className="text-sm text-primary font-bold">{solData?.pnl ? `+$${solData.pnl.toLocaleString()}` : '$0.00'}</div>
                     </div>
                     <div className="p-3">
                         <div className="text-[10px] text-muted-foreground mb-0.5">VOLUME (SOL)</div>
-                        <div className="text-sm text-foreground">42,050</div>
+                        <div className="text-sm text-foreground">{solData.volume.toLocaleString()}</div>
                     </div>
                     <div className="p-3">
                         <div className="text-[10px] text-muted-foreground mb-0.5">AVG ENTRY</div>
@@ -134,7 +179,7 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="p-3">
                         <div className="text-[10px] text-muted-foreground mb-0.5">FEES PAID</div>
-                        <div className="text-sm text-accent-pink">-$124.80</div>
+                        <div className="text-sm text-accent-pink">-${analyticsData.totalFees.toFixed(2)}</div>
                     </div>
                 </div>
             </div>
@@ -149,24 +194,24 @@ export default function AnalyticsPage() {
                         <div className="flex justify-between items-center mb-1">
                             <span className="text-[10px] text-muted-foreground">ASIAN</span>
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-primary font-bold">+$1,204</span>
-                                <span className="text-[9px] text-muted-foreground/80">4.2%</span>
+                                <span className="text-[10px] text-primary font-bold">${analyticsData?.sessionPerformance?.['Asian']?.pnl || 0}</span>
+                                <span className="text-[9px] text-muted-foreground/80">0%</span>
                             </div>
                         </div>
                         <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-                            <div className="h-full bg-primary/60 w-[45%]"></div>
+                            <div className="h-full bg-primary/60 w-[0%]"></div>
                         </div>
                     </div>
                     <div>
                         <div className="flex justify-between items-center mb-1">
                             <span className="text-[10px] text-muted-foreground">LONDON</span>
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-foreground font-bold">+$892</span>
-                                <span className="text-[9px] text-muted-foreground/80">2.1%</span>
+                                <span className="text-[10px] text-foreground font-bold">${analyticsData?.sessionPerformance?.['London']?.pnl || 0}</span>
+                                <span className="text-[9px] text-muted-foreground/80">0%</span>
                             </div>
                         </div>
                         <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-                            <div className="h-full bg-primary/40 w-[30%]"></div>
+                            <div className="h-full bg-primary/40 w-[0%]"></div>
                         </div>
                     </div>
                     <div>
@@ -175,45 +220,19 @@ export default function AnalyticsPage() {
                                 NY SESSION <span className="w-1 h-1 bg-primary rounded-full animate-pulse"></span>
                             </span>
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-primary font-bold">+$3,420</span>
-                                <span className="text-[9px] text-muted-foreground/80">11.5%</span>
+                                <span className="text-[10px] text-primary font-bold">${analyticsData?.sessionPerformance?.['New York']?.pnl || 0}</span>
+                                <span className="text-[9px] text-muted-foreground/80">0%</span>
                             </div>
                         </div>
                         <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-                            <div className="h-full bg-primary w-[78%]"></div>
+                            <div className="h-full bg-primary w-[0%]"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {/* Live Engine Logs (Mobile) */}
-        <div className="px-2 pb-4">
-            <div className="border border-border rounded bg-black p-3 font-mono text-[10px] h-32 overflow-y-auto custom-scrollbar">
-                <div className="sticky top-0 bg-black pb-2 border-b border-border mb-2 flex justify-between items-center">
-                    <span className="text-muted-foreground uppercase tracking-widest">&gt; LIVE_ENGINE_LOGS</span>
-                     <span className="w-1.5 h-1.5 bg-primary rounded-sm animate-pulse"></span>
-                </div>
-                <div className="flex flex-col gap-2 font-mono">
-                    <div className="text-muted-foreground">
-                        <span className="text-primary">[GET]</span> /api/analytics/sol_wallet_84f
-                        <div className="text-muted-foreground/60 pl-2 mt-0.5">Status: 200 OK (12ms)</div>
-                    </div>
-                     <div className="text-muted-foreground">
-                        <span className="text-primary">[WSS]</span> wss://feed.deriverse.io/risk
-                        <div className="text-muted-foreground/60 pl-2 mt-0.5">Subscription: CONFIRMED</div>
-                    </div>
-                     <div className="text-muted-foreground">
-                        <span className="text-accent-pink">[POST]</span> /api/risk/update_leverage
-                        <div className="text-muted-foreground/60 pl-2 mt-0.5">Payload: {"{ \"max\": \"5x\" }"}</div>
-                    </div>
-                     <div className="text-muted-foreground">
-                        <span className="text-primary">[GET]</span> /api/pnl/realized
-                        <div className="text-muted-foreground/60 pl-2 mt-0.5">Syncing...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div className="h-4"></div>
 
       </div>
 
@@ -223,14 +242,19 @@ export default function AnalyticsPage() {
         {/* Left Content Area */}
         <div className="flex-1 flex flex-col bg-background w-full overflow-y-auto custom-scrollbar min-h-0">
           
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col"
+          >
+          
           {/* KPI Cards */}
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border border-b border-border p-2 sm:p-4 shrink-0 transition-all duration-700 ease-out ${
-            isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-          }`}>
+          <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border border-b border-border p-2 sm:p-4 shrink-0">
             {/* Profit Factor */}
             <div className="bg-card p-4 rounded relative overflow-hidden group hover:border-primary/30 transition-colors border border-transparent">
               <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2">Profit Factor</div>
-              <div className="text-4xl font-mono text-primary font-bold">1.8</div>
+              <div className="text-4xl font-mono text-primary font-bold">{analyticsData?.riskMetrics?.profitFactor?.toFixed(2) || '0.00'}</div>
               <div className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
                 <span className="text-primary">▲ 0.2</span> vs last session
               </div>
@@ -240,27 +264,25 @@ export default function AnalyticsPage() {
             {/* Expectancy */}
             <div className="bg-card p-4 rounded relative overflow-hidden group hover:border-primary/30 transition-colors border border-transparent">
               <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2">Expectancy (R)</div>
-              <div className="text-4xl font-mono text-foreground font-bold">0.35</div>
+              <div className="text-4xl font-mono text-foreground font-bold">{analyticsData?.riskMetrics?.expectancy?.toFixed(2) || '0.00'}</div>
               <div className="text-[10px] text-muted-foreground mt-2">
-                Avg Win: <span className="text-primary">$420</span> / Avg Loss: <span className="text-pink">$150</span>
+                Avg Win: <span className="text-primary">${analyticsData?.avgWin?.toFixed(2) || '0.00'}</span> / Avg Loss: <span className="text-pink">${Math.abs(analyticsData?.avgLoss || 0).toFixed(2)}</span>
               </div>
             </div>
 
             {/* Win Rate */}
             <div className="bg-card p-4 rounded relative overflow-hidden group hover:border-primary/30 transition-colors border border-transparent">
               <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2">Win Rate</div>
-              <div className="text-4xl font-mono text-foreground font-bold">62%</div>
+              <div className="text-4xl font-mono text-foreground font-bold">{analyticsData?.winRate || 0}%</div>
               <div className="w-full h-1.5 bg-muted rounded-full mt-3 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-primary to-primary/80 w-[62%]"></div>
+                <div className="h-full bg-gradient-to-r from-primary to-primary/80" style={{ width: `${analyticsData?.winRate || 0}%` }}></div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Max Drawdown Chart - Fixed Height to enable scrolling */}
           {/* Main Chart Section */}
-          <div className={`bg-card border border-border p-4 rounded m-4 mb-2 shrink-0 flex flex-col relative transition-all duration-700 ease-out delay-100 ${
-            isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-          }`}>
+          <motion.div variants={item} className="bg-card border border-border p-4 rounded m-4 mb-2 shrink-0 flex flex-col relative">
             {/* Chart Filters & Header */}
             <div className="flex flex-col gap-6 mb-6">
               {/* Filter Bar */}
@@ -268,11 +290,25 @@ export default function AnalyticsPage() {
                   <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2 text-primary">
                           <span className="material-icons text-sm">tune</span> 
-                          {/* Note: using material key name if available or lucide equivalent if configured, keeping mimic of screenshot */}
                           <span className="text-[10px] font-mono font-bold tracking-widest">CHART_FILTERS</span>
                       </div>
                       <div className="h-4 w-px bg-border"></div>
                       <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
+                           {/* Use Select for Market now */}
+                           <Select value={filterMarket} onValueChange={setFilterMarket}>
+                                <SelectTrigger className="w-[124px] h-6 text-[10px] bg-background border-border">
+                                    <SelectValue placeholder="MARKET" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px] overflow-y-auto">
+                                    <SelectItem value="ALL_MARKETS">ALL_MARKETS</SelectItem>
+                                    {Object.values(MARKET_MAP).map((market) => (
+                                        <SelectItem key={market} value={market}>{market}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                           </Select>
+                          
+                          <div className="h-4 w-px bg-border mx-2"></div>
+
                           <span>START:</span>
                           <DatePicker date={startDate} setDate={setStartDate} />
                           <span>END:</span>
@@ -281,6 +317,12 @@ export default function AnalyticsPage() {
                   </div>
                   
                   <div className="flex items-center gap-4">
+                      {isDemo && (
+                          <div className="px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[9px] font-mono rounded">
+                              DEMO MODE
+                          </div>
+                      )}
+                      
                       <div className="flex border border-border rounded-sm overflow-hidden">
                           <button className="px-3 py-1 text-[10px] font-mono text-muted-foreground hover:bg-muted/10 transition hover:text-foreground">REALIZED</button>
                           <div className="w-px bg-border"></div>
@@ -304,7 +346,7 @@ export default function AnalyticsPage() {
               {/* Big PnL Display */}
               <div className="px-2">
                   <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-1">CUMULATIVE_PNL</div>
-                  <div className="text-4xl sm:text-5xl font-mono text-primary font-bold tracking-tight shadow-primary/20 drop-shadow-sm">$12.50</div>
+                  <div className="text-4xl sm:text-5xl font-mono text-primary font-bold tracking-tight shadow-primary/20 drop-shadow-sm">${analyticsData?.totalPnl?.total?.toFixed(2) || '0.00'}</div>
                   <div className="text-[10px] font-mono text-muted-foreground mt-2">Date: 2026-02-09</div>
               </div>
             </div>
@@ -317,34 +359,30 @@ export default function AnalyticsPage() {
                 <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
                 <div className="w-full h-px bg-border border-t border-dashed border-muted-foreground/30"></div>
               </div>
-              <MainAnalyticsChart />
+              <MainAnalyticsChart data={historicalPnlData} />
             </div>
-          </div>
+          </motion.div>
 
-          {/* NEW ROW: Heatmap & Composition & Leaderboard */}
-          <div className={`mx-4 mb-4 grid grid-cols-1 lg:grid-cols-12 gap-2 shrink-0 transition-all duration-700 ease-out delay-200 ${
-             isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-          }`}>
-             {/* Heatmap (4 Cols) */}
-             <div className="lg:col-span-4 bg-card border border-border rounded p-4 h-[300px]">
-                 <Heatmap data={mockHeatmapData} />
+          {/* Heatmap & Composition & Leaderboard */}
+          <motion.div variants={item} className="mx-4 mb-4 grid grid-cols-1 md:grid-cols-12 gap-2 shrink-0">
+             {/* Heatmap */}
+             <div className="md:col-span-6 lg:col-span-4 bg-card border border-border rounded p-4 h-[300px]">
+                 <Heatmap data={heatmapData} />
              </div>
              
-             {/* Composition (4 Cols) */}
-             <div className="lg:col-span-4 bg-card border border-border rounded p-4 h-[300px]">
-                 <CompositionChart />
+             {/* Composition */}
+             <div className="md:col-span-6 lg:col-span-4 bg-card border border-border rounded p-4 h-[300px]">
+                 <CompositionChart data={compositionData} />
              </div>
 
-             {/* Leaderboard (4 Cols) - Increased from 3 */}
-             <div className="lg:col-span-4 bg-card border border-border rounded p-4 h-[300px]">
-                 <Leaderboard />
+             {/* Leaderboard */}
+             <div className="md:col-span-12 lg:col-span-4 bg-card border border-border rounded p-4 h-[300px]">
+                 <Leaderboard data={leaderboardData} />
              </div>
-          </div>
+          </motion.div>
 
           {/* SOL-PERP Metrics */}
-          <div className={`mx-4 mb-10 border border-border rounded bg-card shrink-0 overflow-hidden transition-all duration-700 ease-out delay-200 ${
-            isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-          }`}>
+          <motion.div variants={item} className="mx-4 mb-10 border border-border rounded bg-card shrink-0 overflow-hidden">
             <div className="h-10 border-b border-border flex items-center justify-between px-4 bg-muted/20">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[10px] text-foreground font-bold tracking-widest">SOL-PERP METRICS</span>
@@ -354,11 +392,11 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
               <div className="p-4">
                 <div className="text-[10px] font-mono text-muted-foreground mb-1">REALIZED PNL</div>
-                <div className="text-lg font-mono text-primary font-bold">+$3,240.50</div>
+                <div className="text-lg font-mono text-primary font-bold">{solData.pnl ? `+$${solData.pnl.toLocaleString()}` : '$0.00'}</div>
               </div>
               <div className="p-4">
                 <div className="text-[10px] font-mono text-muted-foreground mb-1">TOTAL VOLUME</div>
-                <div className="text-lg font-mono text-foreground">42,050 SOL</div>
+                <div className="text-lg font-mono text-foreground">{solData.volume.toLocaleString()} SOL</div>
               </div>
               <div className="p-4">
                 <div className="text-[10px] font-mono text-muted-foreground mb-1">AVG ENTRY</div>
@@ -366,78 +404,41 @@ export default function AnalyticsPage() {
               </div>
               <div className="p-4">
                 <div className="text-[10px] font-mono text-muted-foreground mb-1">FEES PAID</div>
-                <div className="text-lg font-mono text-pink">-$124.80</div>
+                <div className="text-lg font-mono text-pink">-${analyticsData.totalFees.toFixed(2)}</div>
               </div>
             </div>
-          </div>
+          </motion.div>
+          
+          </motion.div>
+        
         </div>
 
         {/* Right Sidebar - Session Performance & Logs */}
-        <div className={`hidden lg:flex lg:flex-col lg:w-80 bg-card flex-shrink-0 border-l border-border transition-all duration-700 ease-out h-full overflow-hidden ${
-          isLoading ? 'opacity-0' : 'opacity-100'
-        }`}>
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="hidden lg:flex lg:flex-col lg:w-80 bg-card flex-shrink-0 border-l border-border h-full overflow-hidden"
+        >
           <header className="h-12 border-b border-border flex items-center px-4 font-mono text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/10 shrink-0">
               SESSION_PERFORMANCE
           </header>
           
-          {/* SCROLLABLE BODY (This is what fixes the "chopped off" issue) */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-4">
-            {/* ASIAN SESSION */}
-            <div className="border border-border rounded bg-background p-3">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-mono text-muted-foreground">ASIAN SESSION</span>
-                <span className="text-[10px] font-mono text-muted-foreground/70">00:00 - 08:00 UTC</span>
-              </div>
-              <div className="flex items-end justify-between">
-                <div className="text-xl font-mono text-foreground">$1,204.00</div>
-                <div className="text-xs font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">+4.2%</div>
-              </div>
-              <div className="mt-3 h-1 w-full bg-border rounded-full overflow-hidden">
-                <div className="h-full bg-primary/60 w-[45%]"></div>
-              </div>
-            </div>
-
-            {/* LONDON SESSION */}
-            <div className="border border-border rounded bg-background p-3">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-mono text-muted-foreground">LONDON SESSION</span>
-                <span className="text-[10px] font-mono text-muted-foreground/70">07:00 - 16:00 UTC</span>
-              </div>
-              <div className="flex items-end justify-between">
-                <div className="text-xl font-mono text-foreground">$892.50</div>
-                <div className="text-xs font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">+2.1%</div>
-              </div>
-              <div className="mt-3 h-1 w-full bg-border rounded-full overflow-hidden">
-                <div className="h-full bg-primary/40 w-[30%]"></div>
-              </div>
-            </div>
-
-            <div className="my-2 border-t border-border border-dashed"></div>
-
-            {/* ENGINE LOGS */}
-            <div className="font-mono text-[10px]">
-              <div className="text-muted-foreground mb-2 uppercase tracking-widest">Live Engine Logs</div>
-              <div className="flex flex-col gap-2">
-                <div className="text-muted-foreground">
-                  <span className="text-primary">GET</span> /api/analytics/sol_wallet_...
-                  <br/><span className="text-muted-foreground/60 pl-4">Status: 200 OK (12ms)</span>
-                </div>
-                <div className="text-muted-foreground">
-                  <span className="text-primary">WS</span> wss://feed.deriverse.io/risk
-                  <br/><span className="text-muted-foreground/60 pl-4">Subscription: CONFIRMED</span>
-                </div>
-              </div>
-            </div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <SessionPerformance sessions={sessionData} />
           </div>
 
           {/* FIXED FOOTER (Always visible at the bottom) */}
           <div className="p-4 border-t border-border bg-card shrink-0">
-            <button className="w-full bg-foreground hover:bg-muted-foreground text-background font-mono font-bold text-xs py-3 rounded flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+            <button 
+                onClick={() => refetch()}
+                className="w-full bg-foreground hover:bg-muted-foreground text-background font-mono font-bold text-xs py-3 rounded flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            >
               <RefreshCcw size={14} />
               REFRESH_ANALYTICS
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     </DashboardLayout>
   )

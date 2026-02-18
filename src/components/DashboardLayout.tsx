@@ -5,6 +5,8 @@ import { Sidebar } from '@/components/Sidebar'
 import { Header } from '@/components/Header'
 import { MobileNav } from '@/components/MobileNav'
 import { usePathname } from 'next/navigation'
+import { useDashboardData } from '@/hooks/useDashboardData'
+import { WalletSyncLoader } from '@/components/WalletSyncLoader'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -14,6 +16,8 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, title }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const { isSyncing, syncResult, refresh, completeSync } = useDashboardData()
+  const isDashboard = pathname === '/'
 
   // Derive activeNav from pathname
   const getActiveNav = (path: string) => {
@@ -34,6 +38,17 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
 
   return (
     <div className="h-screen w-full flex flex-col md:flex-row overflow-hidden bg-background text-foreground transition-colors duration-300 font-mono">
+      {/* Wallet Sync Overlay - Only on Dashboard */}
+      {isSyncing && isDashboard && (
+        <WalletSyncLoader 
+          data={syncResult} 
+          onComplete={() => {
+            console.log("Sync sequence finished, refreshing data UI...")
+            refresh()
+            completeSync?.()
+          }} 
+        />
+      )}
       {/* Scanline Effect - visible on all screens as per design, maybe tune opacity for desktop */}
       <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
         <div className="scanline-effect"></div>

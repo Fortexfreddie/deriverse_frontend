@@ -6,41 +6,55 @@ import { KPICards } from '@/components/dashboard/KPICards'
 import { PositionsTable } from '@/components/dashboard/PositionsTable'
 import { PnLChart } from '@/components/dashboard/PnLChart'
 import { SessionPerformance } from '@/components/dashboard/SessionPerformance'
-import { EngineLog } from '@/components/dashboard/EngineLog'
-import { useAnalytics } from '@/hooks/use-analytics'
+import { useDashboardData } from '@/hooks/useDashboardData'
 
 export default function Dashboard() {
   const { 
-    dashboardData, 
-    analyticsData, 
-    isLoading: isAnalyticsLoading 
-  } = useAnalytics()
+    positions: dashboardData, 
+    analytics: analyticsData, 
+    historicalPnl,
+    isLoading: isPositionsLoading,
+    isAnalyticsLoading,
+    isError: error,
+    refresh
+  } = useDashboardData()
 
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500)
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Transform Analytics Data for KPICards
-  const kpiData = analyticsData ? {
-    unrealizedPnl: `$${analyticsData.totalPnl.unrealized.toFixed(2)}`,
-    realizedPnl: `$${analyticsData.totalPnl.realized.toFixed(2)}`,
-    marginUsage: '42.5%', // Mock per design
-    accountHealth: 85,    // Mock per design
-  } : undefined
+  const handleRetry = () => {
+      refresh()
+  }
+  
+  // Combine loading states
+  const isLoading = isPositionsLoading || isAnalyticsLoading
 
   // Transform Dashboard Data for PositionsTable
   const positionsData = dashboardData.map(pos => ({
-    id: pos.positionId,
-    instrument: pos.market,
+    positionId: pos.positionId,
+    market: pos.market,
     side: pos.side,
     size: pos.size,
-    entryPrice: pos.entry,
-    markPrice: pos.current,
-    pnl: pos.unrealized
+    entry: pos.entry,
+    current: pos.current,
+    unrealized: pos.unrealized,
+    realized: pos.realized || 0,
+    fees: pos.fees || 0
   }))
+
+  // Transform Session Performance for right sidebar
+  const sessionData = analyticsData ? Object.entries(analyticsData.sessionPerformance).map(([name, data]) => ({
+    name: name.toUpperCase() + ' SESSION',
+    status: (name === 'New York' ? 'ACTIVE' : 'CLOSED') as 'ACTIVE' | 'CLOSED',
+    pnl: `$${data.pnl.toFixed(2)}`,
+    return: `${data.pnl >= 0 ? '+' : ''}${((data.pnl / (analyticsData.totalPnl.total || 1)) * 100).toFixed(1)}%`
+  })) : undefined
+
+  // PnL Chart Metrics
+  const chartMetrics = analyticsData ? {
+    cumulativePnl: `$${analyticsData.totalPnl.total.toFixed(2)}`,
+    volume24h: `${analyticsData.marketPerformance['SOL-USDC']?.volume.toLocaleString() || '0'} SOL`,
+    openInterest: '$4.2M', // Mock
+    fundingRate: '0.012% / 1H', // Mock
+    nextFunding: '00:45:12', // Mock
+  } : undefined
 
   return (
     <DashboardLayout title="DASHBOARD // POSITIONS">
@@ -98,13 +112,13 @@ export default function Dashboard() {
         <div className="w-full bg-background">
              <div className="divide-y divide-border">
                  {positionsData.map((pos) => (
-                     <div key={pos.id} className="grid grid-cols-[1.5fr_1fr_1fr] px-3 py-3 items-center active:bg-white/5 transition-colors font-mono">
+                     <div key={pos.positionId} className="grid grid-cols-[1.5fr_1fr_1fr] px-3 py-3 items-center active:bg-white/5 transition-colors font-mono">
                          <div className="flex items-center gap-2">
                              {/* Placeholder Icon */}
                              <div className="w-3.5 h-3.5 rounded-full bg-gray-700 flex-shrink-0"></div> 
                              <div className="flex flex-col leading-none">
-                                 <span className="font-bold text-foreground text-[10px]">{pos.instrument}</span>
-                                 <span className="text-[9px] text-muted-foreground mt-0.5">{pos.entryPrice} → {pos.markPrice}</span>
+                                 <span className="font-bold text-foreground text-[10px]">{pos.market}</span>
+                                 <span className="text-[9px] text-muted-foreground mt-0.5">{pos.entry} → {pos.current}</span>
                              </div>
                          </div>
                          <div className="text-center">
@@ -112,8 +126,8 @@ export default function Dashboard() {
                                  {pos.side}
                              </span>
                          </div>
-                         <div className={`text-right font-bold text-[11px] ${pos.pnl >= 0 ? "text-primary" : "text-accent-pink"}`}>
-                             {pos.pnl >= 0 ? "+" : ""}{pos.pnl}
+                         <div className={`text-right font-bold text-[11px] ${pos.unrealized >= 0 ? "text-primary" : "text-accent-pink"}`}>
+                             {pos.unrealized >= 0 ? "+" : ""}{pos.unrealized}
                          </div>
                      </div>
                  ))}
@@ -129,20 +143,15 @@ export default function Dashboard() {
         <div className="border-t border-border bg-background mt-2">
             <div className="px-3 py-2 border-b border-border flex justify-between items-center">
                 <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">CUMULATIVE_PNL</h3>
-                <span className="text-xs text-foreground font-bold">$12,450.00</span>
+                <span className="text-xs text-foreground font-bold">{chartMetrics?.cumulativePnl || "$0.00"}</span>
             </div>
             <div className="h-[120px] relative w-full overflow-hidden border-b border-border">
-                 {/* Reusing PnLChart component or creating a simplified SVG based on design? 
-                     Design provided SVG path. PnLChart uses Recharts.
-                     Sticking to Recharts is safer for data binding, but user provided specific SVG path.
-                     I will use the PnLChart component but ensure it fits the container.
-                 */}
-                <PnLChart />
+                <PnLChart metrics={chartMetrics} chartData={historicalPnl} />
             </div>
              <div className="grid grid-cols-2 divide-x divide-border border-b border-border text-[9px] font-mono">
                 <div className="p-3 text-center">
                     <div className="text-muted-foreground uppercase mb-1">24H VOLUME</div>
-                    <div className="text-foreground font-bold">142,050 SOL</div>
+                    <div className="text-foreground font-bold">{chartMetrics?.volume24h || "0 SOL"}</div>
                 </div>
                 <div className="p-3 text-center">
                     <div className="text-muted-foreground uppercase mb-1">OPEN INTEREST</div>
@@ -151,16 +160,8 @@ export default function Dashboard() {
             </div>
         </div>
 
-        {/* Live Engine Logs */}
-        <div className="bg-card border-t border-border mt-2 pb-2">
-            <header className="h-8 flex items-center justify-between px-3 font-mono text-[9px] uppercase tracking-wider text-muted-foreground bg-background border-b border-border">
-                <span>LIVE_ENGINE_LOGS</span>
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-            </header>
-            <div className="p-3">
-                 <EngineLog />
-            </div>
-        </div>
+        {/* Spacing for mobile nav */}
+        <div className="h-4"></div>
       </div>
       
       {/* Desktop Dashboard Grid (Original) */}
@@ -169,17 +170,27 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col bg-background w-full overflow-y-auto custom-scrollbar min-h-0">
           {/* KPI Cards */}
           <div className={`transition-all duration-700 ease-out ${isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-            <KPICards data={kpiData} />
+            <KPICards 
+                analytics={analyticsData} 
+                isLoading={isLoading} 
+                isError={!!error} 
+                onRetry={handleRetry} 
+            />
           </div>
 
           {/* Positions Table */}
           <div className={`transition-all duration-700 ease-out delay-100 ${isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-            <PositionsTable positions={positionsData} />
+            <PositionsTable 
+                positions={positionsData} 
+                isLoading={isLoading} 
+                isError={!!error}
+                onRetry={handleRetry}
+            />
           </div>
 
           {/* PnL Chart */}
           <div className={`transition-all duration-700 ease-out delay-200 ${isLoading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-            <PnLChart />
+            <PnLChart metrics={chartMetrics} chartData={historicalPnl} />
           </div>
         </div>
 
@@ -192,13 +203,9 @@ export default function Dashboard() {
 
           {/* Session Performance - Flex for scrolling */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <SessionPerformance />
+            <SessionPerformance sessions={sessionData} />
           </div>
 
-          {/* Live Engine Logs - Flex for scrolling */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar border-t border-border">
-            <EngineLog />
-          </div>
         </div>
       </div>
     </DashboardLayout>

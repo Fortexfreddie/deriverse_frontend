@@ -4,8 +4,10 @@ import React, { useMemo } from 'react'
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, getDay, isSameDay } from 'date-fns'
 import { cn } from '@/lib/utils'
 
+import { HeatmapData } from '@/lib/api'
+
 interface HeatmapProps {
-  data?: Record<string, number> // date string (YYYY-MM-DD) -> pnl
+  data?: HeatmapData // date string (YYYY-MM-DD) -> { pnl, count, trades }
   year?: number
   month?: number // 0-11
   className?: string
@@ -57,15 +59,16 @@ export function Heatmap({ data = {}, year, month, className }: HeatmapProps) {
 
         {days.map((day) => {
           const dateStr = format(day, 'yyyy-MM-dd')
-          const pnl = data[dateStr]
+          const dayData = data[dateStr]
+          const pnl = dayData?.pnl
           const dayNum = format(day, 'd')
           
           let bgClass = 'bg-muted/10 border-transparent text-muted-foreground'
           
-          if (pnl > 0) {
+          if (pnl !== undefined && pnl > 0) {
              const opacity = Math.min(Math.abs(pnl) / 100, 1) * 0.5 + 0.1 // Simple scale
              bgClass = 'bg-primary/20 border-primary/30 text-primary shadow-[0_0_10px_rgba(0,255,196,0.1)]'
-          } else if (pnl < 0) {
+          } else if (pnl !== undefined && pnl < 0) {
              bgClass = 'bg-pink/20 border-pink/30 text-pink'
           }
 
@@ -94,6 +97,9 @@ export function Heatmap({ data = {}, year, month, className }: HeatmapProps) {
                         </span>
                     ) : (
                         <span className="text-muted-foreground italic">No Activity</span>
+                    )}
+                    {dayData?.count && (
+                        <span className="text-[8px] text-muted-foreground/80">{dayData.count} trades</span>
                     )}
                 </div>
               </div>

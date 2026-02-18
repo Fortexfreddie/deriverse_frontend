@@ -1,64 +1,85 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { TableProperties } from 'lucide-react'
-
-interface Position {
-  id: string
-  instrument: string
-  side: 'LONG' | 'SHORT'
-  size: number
-  entryPrice: number
-  markPrice: number
-  pnl: number
-  icon?: string
-}
+import { DashboardPosition } from '@/lib/api'
 
 interface PositionsTableProps {
-  positions?: Position[]
+  positions: DashboardPosition[]
+  isLoading?: boolean
+  isError?: boolean
+  onRetry?: () => void
 }
 
-export function PositionsTable({ positions }: PositionsTableProps) {
-  const defaultPositions: Position[] = [
-    {
-      id: '1',
-      instrument: 'SOL-USDC',
-      side: 'LONG',
-      size: 15.0,
-      entryPrice: 84.52,
-      markPrice: 87.77,
-      pnl: 8.13,
-    },
-    {
-      id: '2',
-      instrument: 'SOL-USDC',
-      side: 'LONG',
-      size: 10.5,
-      entryPrice: 84.73,
-      markPrice: 87.77,
-      pnl: 6.55,
-    },
-    {
-      id: '3',
-      instrument: 'SOL-USDC',
-      side: 'LONG',
-      size: 5.0,
-      entryPrice: 85.88,
-      markPrice: 87.77,
-      pnl: 4.16,
-    },
-    {
-      id: '4',
-      instrument: 'SOL-USDC',
-      side: 'SHORT',
-      size: 8.25,
-      entryPrice: 84.96,
-      markPrice: 87.77,
-      pnl: -0.56,
-    },
-  ]
+// Helper component for the Flash Effect
+const PnlCell = ({ value }: { value: number }) => {
+    const [flash, setFlash] = useState<'green' | 'red' | null>(null)
+    const prevValueRef = useRef(value)
 
-  const displayPositions = positions || defaultPositions
+    useEffect(() => {
+        if (value !== prevValueRef.current) {
+            if (value > prevValueRef.current) setFlash('green')
+            else if (value < prevValueRef.current) setFlash('red')
+            
+            const timer = setTimeout(() => setFlash(null), 1000)
+            prevValueRef.current = value
+            return () => clearTimeout(timer)
+        }
+    }, [value])
+
+    const isPositive = value >= 0
+    const textColor = isPositive ? 'text-pnl-gain' : 'text-accent-pink'
+    
+    // Flash classes
+    const flashClass = flash === 'green' ? 'animate-flash-green' : flash === 'red' ? 'animate-flash-red' : ''
+
+    return (
+        <span className={`font-bold transition-colors duration-300 ${textColor} ${flashClass}`}>
+            {isPositive ? '+' : ''}{value.toFixed(2)}
+        </span>
+    )
+}
+
+export function PositionsTable({ positions, isLoading, isError, onRetry }: PositionsTableProps) {
+  if (isError) {
+       return (
+        <div className="p-6 flex flex-col items-center justify-center border border-border bg-card rounded m-6 border-dashed">
+             <p className="text-muted-foreground text-sm mb-4">Error loading positions</p>
+             <button 
+                onClick={onRetry}
+                className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-bold rounded border border-border"
+             >
+                 RETRY CONNECTION
+             </button>
+        </div>
+      )
+  }
+  if (isLoading) {
+      return (
+        <div className="p-2 sm:p-6 flex flex-col space-y-4">
+            <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+            <div className="space-y-2">
+                {[1,2,3].map(i => <div key={i} className="h-12 w-full bg-muted/50 animate-pulse rounded" />)}
+            </div>
+        </div>
+      )
+  }
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  }
+
+  const item = {
+    hidden: { opacity: 0, x: -20 },
+    show: { opacity: 1, x: 0 }
+  }
 
   return (
     <div className="p-2 sm:p-6 flex flex-col">
@@ -79,7 +100,11 @@ export function PositionsTable({ positions }: PositionsTableProps) {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden sm:block w-full border border-border rounded bg-card overflow-hidden overflow-x-auto">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="hidden sm:block w-full border border-border rounded bg-card overflow-hidden overflow-x-auto"
+      >
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-border bg-muted/20 text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-widest">
@@ -93,15 +118,15 @@ export function PositionsTable({ positions }: PositionsTableProps) {
             </tr>
           </thead>
           <tbody className="text-xs font-mono divide-y divide-border">
-            {displayPositions.map((position) => (
+            {positions.map((position) => (
               <tr
-                key={position.id}
+                key={position.positionId}
                 className="group hover:bg-muted/50 transition-colors border-l-2 border-transparent hover:border-pnl-gain"
               >
                 <td className="p-2 sm:p-4">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gray-700 flex-shrink-0"></div>
-                    <span className="font-bold text-foreground text-xs sm:text-sm">{position.instrument}</span>
+                    <span className="font-bold text-foreground text-xs sm:text-sm">{position.market}</span>
                   </div>
                 </td>
                 <td className="p-2 sm:p-4 text-right">
@@ -116,14 +141,10 @@ export function PositionsTable({ positions }: PositionsTableProps) {
                   </span>
                 </td>
                 <td className="p-2 sm:p-4 text-right text-muted-foreground text-xs">{position.size.toFixed(2)}</td>
-                <td className="hidden md:table-cell p-2 sm:p-4 text-right text-muted-foreground text-xs">{position.entryPrice.toFixed(2)}</td>
-                <td className="p-2 sm:p-4 text-right text-foreground text-xs">{position.markPrice.toFixed(2)}</td>
-                <td
-                  className={`p-2 sm:p-4 text-right font-bold text-xs ${
-                    position.pnl >= 0 ? 'text-pnl-gain' : 'text-accent-pink'
-                  }`}
-                >
-                  {position.pnl >= 0 ? '+' : ''}{position.pnl.toFixed(2)}
+                <td className="hidden md:table-cell p-2 sm:p-4 text-right text-muted-foreground text-xs">{position.entry.toFixed(2)}</td>
+                <td className="p-2 sm:p-4 text-right text-foreground text-xs">{position.current.toFixed(2)}</td>
+                <td className="p-2 sm:p-4 text-right text-xs">
+                  <PnlCell value={position.unrealized} />
                 </td>
                 <td className="hidden sm:table-cell p-2 sm:p-4 text-center">
                   <button className="text-[8px] sm:text-[10px] border border-border hover:bg-muted hover:border-foreground/30 text-muted-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded transition whitespace-nowrap">
@@ -132,21 +153,32 @@ export function PositionsTable({ positions }: PositionsTableProps) {
                 </td>
               </tr>
             ))}
+             {positions.length === 0 && (
+                <tr>
+                    <td colSpan={7} className="p-8 text-center text-muted-foreground">No active positions</td>
+                </tr>
+            )}
           </tbody>
         </table>
-      </div>
+      </motion.div>
 
       {/* Mobile Card View */}
-      <div className="sm:hidden flex flex-col gap-2">
-        {displayPositions.map((position) => (
-          <div
-            key={position.id}
+      <motion.div 
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="sm:hidden flex flex-col gap-2"
+      >
+        {positions.map((position) => (
+          <motion.div
+            variants={item}
+            key={position.positionId}
             className="border border-border bg-card p-3 rounded hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-gray-700"></div>
-                <span className="font-bold text-sm text-foreground">{position.instrument}</span>
+                <span className="font-bold text-sm text-foreground">{position.market}</span>
               </div>
               <span
                 className={`${
@@ -165,27 +197,26 @@ export function PositionsTable({ positions }: PositionsTableProps) {
               </div>
               <div className="text-right">
                 <div className="text-muted-foreground text-[9px] mb-1">MARK PRICE</div>
-                <div className="text-foreground font-bold">{position.markPrice.toFixed(2)}</div>
+                <div className="text-foreground font-bold">{position.current.toFixed(2)}</div>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-muted-foreground text-[9px] mb-1">PnL (USDC)</div>
-                <div
-                  className={`font-bold text-sm ${
-                    position.pnl >= 0 ? 'text-pnl-gain' : 'text-accent-pink'
-                  }`}
-                >
-                  {position.pnl >= 0 ? '+' : ''}{position.pnl.toFixed(2)}
+                <div className="text-sm">
+                    <PnlCell value={position.unrealized} />
                 </div>
               </div>
               <button className="text-[9px] border border-border hover:bg-muted hover:border-foreground/30 text-muted-foreground px-2 py-1 rounded transition">
                 CLOSE
               </button>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+         {positions.length === 0 && (
+            <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded">No active positions</div>
+        )}
+      </motion.div>
     </div>
   )
 }

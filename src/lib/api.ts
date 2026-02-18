@@ -1,4 +1,4 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 // Shared Types 
 
@@ -22,6 +22,42 @@ export interface DashboardPosition {
     fees: number;
 }
 
+export interface TradePosition {
+    id: string;
+    walletAddress: string;
+    market: string;
+    side: 'LONG' | 'SHORT';
+    status: 'OPEN' | 'CLOSED';
+    avgEntryPrice: number;
+    avgExitPrice: number | null;
+    totalSize: number;
+    totalFees: number;
+    realizedPnl: number;
+    notes: string | null;
+    strategyUsed: string | null;
+    rating: number | null;
+    emotion: string | null;
+    aiReview: string | null;
+    aiBias: string | null;
+    aiInsight: string | null;
+    aiAdvice: string | null;
+    aiScore: number | null;
+    aiNextAction: string | null;
+    actualExitPrice: number | null;
+    hypotheticalExitPrice: number | null;
+    opportunityCost: number | null;
+    opportunityCostNote: string | null;
+    newsHeadlines: string[] | null;
+    marketSentiment: string | null;
+    macroContext: string | null;
+    traderProfile: string | null;
+    tradeFrequency: number | null;
+    lastNudge: string | null;
+    createdAt: string;
+    updatedAt: string;
+    closedAt: string | null;
+}
+
 export interface TradeEvent {
     id: string;
     signature: string;
@@ -34,15 +70,30 @@ export interface TradeEvent {
     tradeType: string;
     notes: string | null;
     timestamp: string;
+    position: TradePosition;
+}
+
+export interface TradeSummary {
+    totalTrades: number;
+    totalFees: number;
+    netVolume24h: number;
+    volumeChange24h: number;
+    avgTradeSize: number;
+    distribution: {
+        spot: number;
+        perp: number;
+    };
+    gasVsProtocolRatio?: number;
+    tradeFrequency?: number;
+    profitFactorHistory?: number;
 }
 
 export interface TradesResponse {
+    success: boolean;
+    summary: TradeSummary;
     data: TradeEvent[];
-    count: number;
-    total: number;
     pagination: {
-        limit: number | null;
-        offset: number | null;
+        total: number;
         hasMore: boolean;
     };
 }
@@ -64,6 +115,10 @@ export interface ComprehensiveAnalytics {
     };
     avgTradeDuration: number;
     longShortRatio: number;
+    largestGain: number | null;
+    largestLoss: number | null;
+    avgWin: number;
+    avgLoss: number;
     totalFees: number;
     totalVolume: number;
     feeComposition: {
@@ -72,6 +127,7 @@ export interface ComprehensiveAnalytics {
         total: number;
     };
     sessionPerformance: Record<string, { pnl: number; count: number }>;
+    orderTypePerformance?: Record<string, { count: number; totalPnl: number; avgPnl: number }>;
     marketPerformance: Record<string, { pnl: number; winRate: number; tradeCount: number; volume: number }>;
     riskMetrics: {
         sharpeRatio: number;
@@ -79,8 +135,8 @@ export interface ComprehensiveAnalytics {
         maxDrawdown: number;
         profitFactor: number;
         expectancy: number;
-        dailyVariance: number;
-        annualVolatility: number;
+        dailyVariance?: number;
+        annualVolatility?: number;
     };
 }
 
@@ -96,6 +152,8 @@ export interface HistoricalPnlData {
 export interface LeaderboardEntry {
     wallet: string;
     pnl: number;
+    winRate?: number;
+    avatar?: string;
 }
 
 export interface EquityCurvePoint {
@@ -176,10 +234,12 @@ export interface JournalAnalysis {
         strength: string;
         weakness: string;
         nudge: string;
+        winRate: number;
     };
     macroContext: {
         sentiment: string;
         macroContext: string;
+        headlines?: string[];
     };
     whatIfAnalysis: {
         opportunityCost: number;
@@ -238,7 +298,26 @@ export async function fetchTrades(
     }
     const queryString = params.toString();
     const endpoint = `/trades/${wallet}${queryString ? `?${queryString}` : ''}`;
-    return fetchAPI<TradesResponse>(endpoint);
+    
+    // Manual fetch to handle custom response structure (summary/pagination siblings)
+    const res = await fetch(`${API_URL}${endpoint}`);
+    if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new Error(errorBody.error || `API request failed: ${res.statusText} (${res.status})`);
+    }
+    
+    const json = await res.json();
+    if (!json.success) {
+        throw new Error(json.error || 'API request failed');
+    }
+
+    // Return the whole object as TradesResponse (it matches the interface)
+    return {
+        success: json.success,
+        summary: json.summary,
+        data: json.data,
+        pagination: json.pagination
+    };
 }
 
 // Analytics 
@@ -314,16 +393,46 @@ export async function fetchBehavioralMetrics(wallet: string): Promise<Behavioral
     return fetchAPI<BehavioralMetrics>(`/analytics/${wallet}/behavior`);
 }
 
-export type HeatmapData = Record<string, number>;
+// Drawdown Types
+export interface DrawdownPoint {
+    timestamp: string;
+    pnl: number;
+    drawdown: number;
+    peak: number;
+}
+
+// Analytics
+export async function fetchDrawdown(wallet: string): Promise<DrawdownPoint[]> {
+    return fetchAPI<DrawdownPoint[]>(`/analytics/drawdown/${wallet}`);
+}
+
+// Heatmap
+export interface HeatmapTrade {
+    id: string;
+    market: string;
+    side: 'LONG' | 'SHORT';
+    realizedPnl: number;
+    fills: any[];
+}
+
+export interface HeatmapDayData {
+    pnl: number;
+    count: number;
+    trades: HeatmapTrade[];
+}
+
+export type HeatmapData = Record<string, HeatmapDayData>;
 
 export async function fetchHeatmap(
     wallet: string,
-    year?: number,
-    month?: number
+    filters?: {
+        year?: number;
+        month?: number;
+    }
 ): Promise<HeatmapData> {
     const params = new URLSearchParams();
-    if (year) params.append('year', String(year));
-    if (month) params.append('month', String(month));
+    if (filters?.year) params.append('year', String(filters.year));
+    if (filters?.month) params.append('month', String(filters.month));
     const queryString = params.toString();
     const endpoint = `/analytics/${wallet}/heatmap${queryString ? `?${queryString}` : ''}`;
     return fetchAPI<HeatmapData>(endpoint);
@@ -335,9 +444,25 @@ export async function submitJournal(
     positionId: string,
     updates: JournalEntryUpdate
 ): Promise<{ data: JournalUpdateResponse; analysis: JournalAnalysis }> {
-    return fetchAPI<{ data: JournalUpdateResponse; analysis: JournalAnalysis }>(`/journal/${positionId}`, {
+    const res = await fetch(`${API_URL}/journal/${positionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
     });
+    
+    if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new Error(errorBody.error || `API request failed: ${res.statusText}`);
+    }
+
+    const json = await res.json();
+    if (!json.success) {
+        throw new Error(json.error || 'API request failed');
+    }
+
+    // Handle the specific response structure where analysis is a sibling of data
+    return {
+        data: json.data,
+        analysis: json.analysis // This field is a sibling of data in the response
+    };
 }

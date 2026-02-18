@@ -1,23 +1,30 @@
 "use client"
 
-import React, { useMemo } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react"
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
 import { clusterApiUrl } from "@solana/web3.js"
-
-// Default wallet adapter styles
 import "@solana/wallet-adapter-react-ui/styles.css"
 
-const SOLANA_RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl("mainnet-beta")
-
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
-  // Wallets array — empty means auto-detect via Wallet Standard
-  // Phantom, Solflare, Backpack, etc. register themselves automatically
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const endpoint = useMemo(() => process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl("mainnet-beta"), [])
   const wallets = useMemo(() => [], [])
 
+  // If we haven't mounted on the client, return a placeholder or null
+  // This prevents the Wallet Standard from initializing too early
+  if (!mounted) {
+    return <div style={{ visibility: 'hidden' }}>{children}</div>
+  }
+
   return (
-    <ConnectionProvider endpoint={SOLANA_RPC_URL}>
-      <WalletProvider wallets={wallets} autoConnect={false}>
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect={true}>
         <WalletModalProvider>
           {children}
         </WalletModalProvider>

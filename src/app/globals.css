@@ -59,6 +59,14 @@
   @keyframes blinker {
     50% { opacity: 0; }
   }
+  @keyframes flash-green {
+    0%, 100% { text-shadow: 0 0 0 transparent; }
+    50% { text-shadow: 0 0 10px var(--gain-mint); color: white; }
+  }
+  @keyframes flash-red {
+    0%, 100% { text-shadow: 0 0 0 transparent; }
+    50% { text-shadow: 0 0 10px var(--loss-pink); color: white; }
+  }
 }
 
 @layer base {
@@ -176,6 +184,12 @@
   }
   .pulse-loss {
     animation: loss-pulse 0.3s ease-out forwards;
+  }
+  .animate-flash-green {
+    animation: flash-green 1s ease-out;
+  }
+  .animate-flash-red {
+    animation: flash-red 1s ease-out;
   }
 
   /* Brutalist Grid Pattern (Adapts to Theme) */
