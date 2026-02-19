@@ -60,7 +60,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <DashboardLayout title="HISTORY // AUDIT">
+    <DashboardLayout title="HISTORY">
 
       {/* --- MOBILE: AUDIT LOG VIEW --- */}
       <div className="flex flex-col md:hidden h-[calc(100vh-3.5rem)] overflow-y-auto custom-scrollbar bg-background font-mono">

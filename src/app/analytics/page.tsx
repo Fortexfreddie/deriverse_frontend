@@ -85,7 +85,7 @@ export default function AnalyticsPage() {
   const solData = analyticsData?.marketPerformance?.['SOL-USDC'] || { pnl: 0, volume: 0, winRate: 0, tradeCount: 0 }
 
   return (
-    <DashboardLayout title="ANALYTICS // RISK_ENGINE">
+    <DashboardLayout title="ANALYTICS">
 
       {/* Mobile Structure (Mobile Risk Engine) */}
       <div className="flex flex-col md:hidden h-[calc(100vh-3.5rem)] overflow-y-auto bg-background font-mono relative">

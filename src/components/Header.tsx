@@ -12,7 +12,7 @@ interface HeaderProps {
   onMenuClick?: () => void
 }
 
-export function Header({ title = 'DASHBOARD // POSITIONS' }: HeaderProps) {
+export function Header({ title = 'DASHBOARD' }: HeaderProps) {
   const { theme, setTheme } = useTheme()
   const { publicKey, connected, disconnect: walletDisconnect } = useWallet()
   const { setVisible } = useWalletModal()
@@ -53,11 +53,6 @@ export function Header({ title = 'DASHBOARD // POSITIONS' }: HeaderProps) {
           <h1 className="text-foreground font-black tracking-tighter text-[11px] md:text-xs truncate uppercase italic">
             {title}
           </h1>
-          {!connected && (
-            <span className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[7px] md:text-[8px] font-black rounded-sm animate-pulse shrink-0">
-              SIMULATION
-            </span>
-          )}
         </div>
 
         <div className="flex items-center gap-1.5 text-[9px] mt-0.5">
@@ -71,7 +66,7 @@ export function Header({ title = 'DASHBOARD // POSITIONS' }: HeaderProps) {
               "font-black transition-colors",
               connected ? "text-primary" : "text-amber-500"
             )}>
-              {connected ? "Mainnet-Beta" : "Simulation_Node"}
+              {connected ? "Mainnet-Beta" : "Simulation-Mode"}
             </span>
           </span>
         </div>

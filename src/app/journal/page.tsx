@@ -53,7 +53,7 @@ export default function JournalPage() {
     if (isDataLoading) return <PageLoader />
 
     return (
-        <DashboardLayout title="JOURNAL // ANALYSIS">
+        <DashboardLayout title="JOURNAL">
             {/* ── Desktop (md+) ─────────────────────────────────────────── */}
             <div className="hidden md:flex flex-1 flex-col h-full overflow-hidden bg-background">
                 <JournalHeatmap

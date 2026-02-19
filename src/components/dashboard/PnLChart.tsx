@@ -40,12 +40,12 @@ export function PnLChart({ metrics, chartData }: PnLChartProps) {
 
   // Map API historical data to chart format if needed
   const finalData = displayData.map(item => ({
-      time: item.time || item.date || '',
-      value: item.value || item.cumulativePnl || 0
+    time: item.time || item.date || '',
+    value: item.value || item.cumulativePnl || 0
   }))
 
   return (
-    <div className="flex-1 px-2 sm:px-6 pb-4 sm:pb-6 min-h-[250px] sm:min-h-[300px] flex flex-col">
+    <div className="flex-1 px-2 sm:px-6 pb-4 sm:pb-6 min-h-[250px] sm:min-h-[300px] flex flex-col bg-secondary">
       <div className="h-8 flex items-center justify-between mb-2">
         <span className="text-[9px] sm:text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
           PERFORMANCE_CHART // LIVE
@@ -60,24 +60,24 @@ export function PnLChart({ metrics, chartData }: PnLChartProps) {
               <AreaChart data={finalData}>
                 <defs>
                   <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--gain-mint)" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="var(--gain-mint)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--gain-mint)" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="var(--gain-mint)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="time" hide />
                 <YAxis hide domain={['dataMin', 'dataMax']} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                   itemStyle={{ color: 'var(--foreground)' }}
                   labelStyle={{ display: 'none' }}
                   formatter={(value: any) => [`$${value}`, 'PnL']}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="var(--gain-mint)" 
-                  fillOpacity={1} 
-                  fill="url(#pnlGradient)" 
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="var(--gain-mint)"
+                  fillOpacity={1}
+                  fill="url(#pnlGradient)"
                   strokeWidth={1.5}
                 />
               </AreaChart>

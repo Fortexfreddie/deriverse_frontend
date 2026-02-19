@@ -46,14 +46,14 @@ export default function Dashboard() {
 
     const chartMetrics = analyticsData ? {
         cumulativePnl: `$${analyticsData.totalPnl.total.toFixed(2)}`,
-        volume24h: `${analyticsData.marketPerformance['SOL-USDC']?.volume.toLocaleString() || '0'} SOL`,
-        openInterest: '$4.2M',
-        fundingRate: '0.012% / 1H',
-        nextFunding: '00:45:12',
+        volume24h: `${(analyticsData.totalVolume || 0).toLocaleString()} USD`,
+        openInterest: 'N/A', // Not in current API
+        fundingRate: 'N/A', // Not in current API
+        nextFunding: '00:00:00',
     } : undefined
 
     return (
-        <DashboardLayout title="DASHBOARD // TERMINAL">
+        <DashboardLayout title="DASHBOARD">
 
             {/* --- MOBILE VIEW: COMPACT HUB --- */}
             <div className="flex flex-col md:hidden h-[calc(100vh-3.5rem)] overflow-hidden bg-background font-mono">
@@ -63,14 +63,14 @@ export default function Dashboard() {
                     {/* Primary Stats Grid (All metrics from your old code restored) */}
                     <div className="grid grid-cols-2 gap-px bg-border border-b border-border shadow-sm">
                         <div className="bg-card p-4">
-                            <span className="text-[8px] text-muted-foreground uppercase tracking-widest block mb-1">TOTAL_UNREALIZED</span>
+                            <span className="text-[8px] text-muted-foreground uppercase tracking-widest block mb-1">TOTAL UNREALIZED</span>
                             <span className={cn("text-xl font-black tracking-tighter",
-                                Number(analyticsData?.totalPnl.unrealized || 0) >= 0 ? "text-primary" : "text-pink")}>
+                                Number(analyticsData?.totalPnl.unrealized || 0) >= 0 ? "text-pnl-gain" : "text-pink")}>
                                 {Number(analyticsData?.totalPnl.unrealized || 0) >= 0 ? "+" : ""}{analyticsData?.totalPnl.unrealized.toFixed(2) || "0.00"}
                             </span>
                         </div>
                         <div className="bg-card p-4 border-l border-border">
-                            <span className="text-[8px] text-muted-foreground uppercase tracking-widest block mb-1">REALIZED_24H</span>
+                            <span className="text-[8px] text-muted-foreground uppercase tracking-widest block mb-1">REALIZED 24H</span>
                             <span className="text-xl font-black tracking-tighter">
                                 {Number(analyticsData?.totalPnl.realized || 0) >= 0 ? "+" : ""}{analyticsData?.totalPnl.realized.toFixed(2) || "0.00"}
                             </span>
@@ -80,7 +80,7 @@ export default function Dashboard() {
                     {/* Active Positions List */}
                     <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border flex justify-between items-center px-4 py-3">
                         <h2 className="text-[10px] font-black tracking-[0.2em] flex items-center gap-2">
-                            <Zap size={12} className="text-primary fill-primary" /> ACTIVE_POSITIONS
+                            <Zap size={12} className="text-primary fill-primary" /> ACTIVE POSITIONS
                         </h2>
                         <span className="text-[8px] font-bold opacity-40 uppercase tracking-tighter">{positionsData.length} RUNNING</span>
                     </div>
@@ -99,7 +99,7 @@ export default function Dashboard() {
                                     <div className="text-[9px] opacity-40">{pos.entry} → {pos.current}</div>
                                 </div>
                                 <div className="text-right">
-                                    <div className={cn("font-black text-sm", pos.unrealized >= 0 ? "text-primary" : "text-pink")}>
+                                    <div className={cn("font-black text-sm", pos.unrealized >= 0 ? "text-pnl-gain" : "text-pink")}>
                                         {pos.unrealized >= 0 ? "+" : ""}{pos.unrealized.toFixed(2)}
                                     </div>
                                     <div className="text-[8px] uppercase opacity-30 font-bold tracking-widest">Unrealized</div>
@@ -112,32 +112,32 @@ export default function Dashboard() {
                 </div>
 
                 {/* --- PINNED ANALYTICS FOOTER: FULL STATS RESTORED --- */}
-                <div className="bg-black border-t border-border flex flex-col shrink-0 z-30">
-                    <div className="px-4 py-2 border-b border-border/50 flex justify-between items-center bg-white/5">
+                <div className="border-t border-border flex flex-col shrink-0 z-30">
+                    <div className="px-4 py-2 border-b border-border/50 flex justify-between items-center">
                         <div className="flex items-center gap-2">
                             <Activity size={10} className="text-primary" />
-                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">PERFORMANCE_CURVE</span>
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">PERFORMANCE CURVE</span>
                         </div>
                         <span className="text-[11px] text-primary font-black">{chartMetrics?.cumulativePnl || "$0.00"}</span>
                     </div>
 
-                    <div className="h-[180px] w-full p-2 bg-gradient-to-b from-transparent to-black/20">
+                    <div className="h-[180px] w-full p-2">
                         <PnLChart metrics={chartMetrics} chartData={historicalPnl} />
                     </div>
 
                     {/* Data Bar (Restored Funding and OI from original logic) */}
-                    <div className="grid grid-cols-3 divide-x divide-border border-t border-border bg-card/10 h-14">
+                    <div className="grid grid-cols-3 divide-x divide-border border-t border-border bg-card/10 h-14 mb-20">
                         <div className="flex flex-col items-center justify-center">
                             <span className="text-[7px] text-muted-foreground uppercase mb-0.5 font-bold tracking-widest">24H_VOL</span>
                             <span className="text-[9px] font-black tracking-tighter">{chartMetrics?.volume24h.split(' ')[0] || "0"}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center">
                             <span className="text-[7px] text-muted-foreground uppercase mb-0.5 font-bold tracking-widest">FUNDING</span>
-                            <span className="text-[9px] font-black text-primary tracking-tighter">0.012%</span>
+                            <span className="text-[9px] font-black text-primary tracking-tighter">{chartMetrics?.fundingRate || "N/A"}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center">
                             <span className="text-[7px] text-muted-foreground uppercase mb-0.5 font-bold tracking-widest">OI</span>
-                            <span className="text-[9px] font-black tracking-tighter">$4.2M</span>
+                            <span className="text-[9px] font-black tracking-tighter">{chartMetrics?.openInterest || "N/A"}</span>
                         </div>
                     </div>
                 </div>
