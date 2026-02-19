@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { 
-    fetchAnalytics, 
-    fetchHeatmap, 
-    fetchLeaderboard, 
+import {
+    fetchAnalytics,
+    fetchHeatmap,
+    fetchLeaderboard,
     fetchPortfolioComposition,
     fetchHistoricalPnl,
     fetchDrawdown,
@@ -12,7 +12,7 @@ import {
     LeaderboardEntry,
     PortfolioCompositionItem
 } from '@/lib/api'
-import { 
+import {
     analyticsData as MOCK_ANALYTICS,
     equityCurveData as MOCK_PNL_HISTORY,
     drawdownData as MOCK_DRAWDOWN,
@@ -32,7 +32,7 @@ export function useAnalytics(filters?: { market?: string; startDate?: Date; endD
             if (isDemo) {
                 return (MOCK_ANALYTICS as unknown) as ComprehensiveAnalytics
             }
-            
+
             const formatDate = (date?: Date) => date?.toISOString().split('T')[0]
 
             return fetchAnalytics(walletAddress!, {
@@ -54,11 +54,11 @@ export function useAnalytics(filters?: { market?: string; startDate?: Date; endD
             let year, month;
             if (filters?.startDate) {
                 year = filters.startDate.getFullYear();
-                month = filters.startDate.getMonth();
+                month = filters.startDate.getMonth() + 1;
             }
             return fetchHeatmap(walletAddress!, { year, month })
         },
-        staleTime: 5 * 60 * 1000, 
+        staleTime: 5 * 60 * 1000,
     })
 
     // Leaderboard Query
