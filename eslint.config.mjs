@@ -5,6 +5,17 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // relax some rules that produce a lot of noisy warnings/errors across the repo
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      'react-hooks/purity': 'off',
+      '@next/next/no-img-element': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

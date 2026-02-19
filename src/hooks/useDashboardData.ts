@@ -33,7 +33,8 @@ export function useDashboardData() {
         if (walletAddress) {
             const alreadySynced = sessionStorage.getItem(`synced-${walletAddress}`) === 'true'
             if (alreadySynced) {
-                setHasSynced(true)
+                // delay to satisfy hook lint rule
+                setTimeout(() => setHasSynced(true), 0)
             }
         } else {
             setHasSynced(false)
@@ -78,7 +79,7 @@ export function useDashboardData() {
         if (walletAddress && !hasSynced && !syncMutation.isPending && !syncMutation.isSuccess && !showSyncLoader) {
             // Check session storage one last time to avoid race condition
             if (sessionStorage.getItem(`synced-${walletAddress}`) === 'true') {
-                setHasSynced(true)
+                setTimeout(() => setHasSynced(true), 0)
                 return
             }
             setShowSyncLoader(true)

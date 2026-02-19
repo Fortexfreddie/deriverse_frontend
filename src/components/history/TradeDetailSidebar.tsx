@@ -1,9 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import { TradeEvent } from '@/lib/api'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { TradeEvent, JournalAnalysis } from '@/lib/api'
 import { parsePositionId } from '@/lib/utils'
+import { useJournalSubmission } from '@/hooks/use-journal-submission'
+import { AnalysisResult } from '@/components/journal/AnalysisResult'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
+import { ObjectViewer } from '@/components/ui/object-viewer'
+import { format } from 'date-fns'
 
 interface TradeDetailSidebarProps {
   trade: TradeEvent | null
@@ -12,36 +18,68 @@ interface TradeDetailSidebarProps {
 }
 
 export function TradeDetailSidebar({ trade, isOpen, onClose }: TradeDetailSidebarProps) {
+  const { publicKey, connected } = useWallet();
+  const wallet = publicKey?.toString();
+  const isDemo = !connected || !wallet;
+
   const [notes, setNotes] = useState('')
-  const [emotion, setEmotion] = useState('')
+  const [emotion, setEmotion] = useState<import('@/lib/api').JournalEntryUpdate['emotion'] | ''>('')
   const [rating, setRating] = useState(3)
   const [hypotheticalPrice, setHypotheticalPrice] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<JournalAnalysis | null>(null)
+
+  // hook for submitting journal entries against a position id
+  const { mutate: submitJournal, isPending: isSubmitting } = useJournalSubmission(
+      trade?.positionId || '',
+      isDemo
+  )
+
+  // populate form fields with incoming trade data
+  useEffect(() => {
+    if (!trade) return;
+    // delay updates to avoid React warning about sync setState in effect
+    setTimeout(() => {
+      setNotes(trade.position?.notes || '')
+      setEmotion((trade.position?.emotion as import('@/lib/api').JournalEntryUpdate['emotion']) || '')
+      setRating(trade.position?.rating ?? 3)
+      setHypotheticalPrice(
+        trade.position?.hypotheticalExitPrice !== undefined && trade.position?.hypotheticalExitPrice !== null
+          ? String(trade.position.hypotheticalExitPrice)
+          : ''
+      )
+    })
+  }, [trade])
 
   if (!trade) return null
+
+  // if we have an AI analysis to show, render it full‑screen over the sidebar
+  if (analysisResult) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background/90 flex items-center justify-center">
+        <AnalysisResult analysis={analysisResult} onClose={() => setAnalysisResult(null)} />
+      </div>
+    )
+  }
 
   const { market, side } = trade.position 
     ? { market: trade.position.market, side: trade.position.side } 
     : parsePositionId(trade.positionId)
 
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      // Call API to save trade notes
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
-      // Reset form
-      setNotes('')
-      setEmotion('')
-      setRating(3)
-      setHypotheticalPrice('')
-      onClose()
-    } catch (error) {
-      console.error('Failed to save notes:', error)
-    } finally {
-      setIsSaving(false)
+
+  const handleSave = () => {
+    if (!trade) return;
+    const payload: Partial<import('@/lib/api').JournalEntryUpdate> = {
+      notes: notes || undefined,
+      emotion: (emotion as import('@/lib/api').JournalEntryUpdate['emotion']) || undefined,
+      rating: rating || undefined,
+      hypotheticalExitPrice: hypotheticalPrice ? parseFloat(hypotheticalPrice) : undefined,
     }
+
+    submitJournal(payload, {
+      onSuccess: (response) => {
+        setAnalysisResult(response.analysis)
+      }
+    })
   }
 
   return (
@@ -56,7 +94,7 @@ export function TradeDetailSidebar({ trade, isOpen, onClose }: TradeDetailSideba
         }`}
       >
         {/* Header */}
-        <div className="h-14 border-b border-border flex items-center justify-between px-4 bg-background flex-shrink-0 sticky top-0 z-10">
+        <div className="h-14 border-b border-border flex items-center justify-between px-4 bg-background shrink-0 sticky top-0 z-10">
           <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Trade Details</h2>
           <button
             onClick={onClose}
@@ -69,14 +107,14 @@ export function TradeDetailSidebar({ trade, isOpen, onClose }: TradeDetailSideba
         {/* Content */}
         <div className="p-4 space-y-6">
           {/* Trade Info */}
-          <div className="space-y-2 border-b border-border-dark pb-4">
+          <div className="space-y-3 border-b border-border-dark pb-4">
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-[9px] text-muted-foreground uppercase mb-1">Market</div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Market</div>
                 <div className="text-sm font-bold text-foreground">{market}</div>
               </div>
               <div>
-                <div className="text-[9px] text-muted-foreground uppercase mb-1">Side</div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Direction</div>
                 <div
                   className={`text-sm font-bold ${
                     side === 'LONG' ? 'text-pnl-gain' : 'text-accent-pink'
@@ -87,31 +125,102 @@ export function TradeDetailSidebar({ trade, isOpen, onClose }: TradeDetailSideba
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-3">
+            <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
-                <div className="text-[9px] text-muted-foreground uppercase mb-1">Price</div>
-                <div className="text-xs text-muted-foreground">{trade.price}</div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Price</div>
+                <div className="text-sm font-mono text-foreground">{trade.price}</div>
               </div>
               <div>
-                <div className="text-[9px] text-muted-foreground uppercase mb-1">Size</div>
-                <div className="text-xs text-muted-foreground">{trade.size}</div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Size</div>
+                <div className="text-sm font-mono text-foreground">{trade.size}</div>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mt-3">
+            <div className="grid grid-cols-3 gap-4 mt-4">
               <div>
-                <div className="text-[9px] text-muted-foreground uppercase mb-1">Fee</div>
-                <div className="text-xs text-muted-foreground">{trade.fee}</div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Fee</div>
+                <div className="text-sm font-mono text-foreground">{trade.fee}</div>
               </div>
               <div>
-                <div className="text-[9px] text-muted-foreground uppercase mb-1">Type</div>
-                <div className="text-xs text-muted-foreground">{trade.tradeType}</div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Type</div>
+                <div className="text-sm text-foreground">{trade.tradeType}</div>
               </div>
               <div>
-                <div className="text-[9px] text-muted-foreground uppercase mb-1">Time</div>
-                <div className="text-xs text-muted-foreground truncate">{trade.timestamp}</div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Time</div>
+                <div className="text-sm font-mono text-foreground truncate">
+                  {format(new Date(trade.timestamp), 'MMM d, yyyy HH:mm:ss')}
+                </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Order</div>
+                <div className="text-sm text-foreground">{trade.orderType}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Entry / Exit</div>
+                <div className="text-xs">
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                      trade.isEntry ? 'bg-pnl-gain/20 text-pnl-gain' : 'bg-accent-pink/20 text-accent-pink'
+                    }`}
+                  >
+                    {trade.isEntry ? 'Entry' : 'Exit'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Trade ID</div>
+                <div className="text-sm font-mono text-foreground break-all">{trade.id}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground uppercase mb-1">Signature</div>
+                <div className="text-sm font-mono text-foreground break-all">{trade.signature}</div>
+              </div>
+            </div>
+
+            {trade.position && (
+              <div className="mt-3 space-y-2">
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase mb-1">Position Status</div>
+                  <div className="text-sm text-foreground">{trade.position.status}</div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase mb-1">Avg Entry</div>
+                    <div className="text-sm font-mono text-foreground">{trade.position.avgEntryPrice}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase mb-1">Total Size</div>
+                    <div className="text-sm font-mono text-foreground">{trade.position.totalSize}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase mb-1">Realized PnL</div>
+                    <div className="text-sm font-mono text-foreground">{trade.position.realizedPnl}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {(trade.rawData || trade.metadata) && (
+              <details className="mt-4 text-xs">
+                <summary className="cursor-pointer text-muted-foreground uppercase font-bold mb-2">Debug info</summary>
+                {trade.rawData && (
+                  <div className="mb-2">
+                    <ObjectViewer obj={trade.rawData} />
+                  </div>
+                )}
+                {trade.metadata && (
+                  <div>
+                    <ObjectViewer obj={trade.metadata} />
+                  </div>
+                )}
+              </details>
+            )}
           </div>
 
           {/* Trade Analysis Form */}
@@ -130,19 +239,22 @@ export function TradeDetailSidebar({ trade, isOpen, onClose }: TradeDetailSideba
             {/* Emotion */}
             <div>
               <label className="text-[9px] text-muted-foreground uppercase font-bold mb-2 block">Emotion During Trade</label>
-              <select
+              <Select
                 value={emotion}
-                onChange={(e) => setEmotion(e.target.value)}
-                className="w-full bg-background border border-border rounded px-3 py-2 text-xs text-foreground focus:border-pnl-gain focus:outline-none"
+                onValueChange={(v) => setEmotion(v as import('@/lib/api').JournalEntryUpdate['emotion'])}
               >
-                <option value="">Select emotion...</option>
-                <option value="CALM">Calm</option>
-                <option value="CONFIDENT">Confident</option>
-                <option value="ANXIOUS">Anxious</option>
-                <option value="FEARFUL">Fearful</option>
-                <option value="GREEDY">Greedy</option>
-                <option value="FOMO">FOMO</option>
-              </select>
+                <SelectTrigger className="w-full h-8 text-[10px] bg-background border-border font-bold">
+                  <SelectValue placeholder="Select emotion..." />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border font-mono">
+                  <SelectItem value="CALM" className="text-[10px]">Calm</SelectItem>
+                  <SelectItem value="CONFIDENT" className="text-[10px]">Confident</SelectItem>
+                  <SelectItem value="ANXIOUS" className="text-[10px]">Anxious</SelectItem>
+                  <SelectItem value="FEARFUL" className="text-[10px]">Fearful</SelectItem>
+                  <SelectItem value="GREEDY" className="text-[10px]">Greedy</SelectItem>
+                  <SelectItem value="FOMO" className="text-[10px]">FOMO</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Rating */}
@@ -191,10 +303,11 @@ export function TradeDetailSidebar({ trade, isOpen, onClose }: TradeDetailSideba
             </button>
             <button
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSubmitting || isDemo}
               className="flex-1 px-4 py-2 rounded bg-pnl-gain text-black hover:bg-pnl-gain-dim transition text-xs font-bold uppercase disabled:opacity-50"
+              title={isDemo ? 'Connect wallet to save notes' : undefined}
             >
-              {isSaving ? 'Saving...' : 'Save Notes'}
+              {isSubmitting ? 'Saving...' : 'Save Notes'}
             </button>
           </div>
         </div>

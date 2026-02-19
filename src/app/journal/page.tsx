@@ -97,7 +97,7 @@ export default function JournalPage() {
                         </div>
 
                         {/* CREATIVE AUDIT STREAM: Collects empty vertical space */}
-                        <div className="flex-grow relative flex flex-col border-t border-border/40 mt-2 bg-black/40 overflow-hidden">
+                        <div className="grow relative flex flex-col border-t border-border/40 mt-2 bg-black/40 overflow-hidden">
 
                             {/* Watermark Logo */}
                             <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
@@ -160,7 +160,7 @@ export default function JournalPage() {
                             </div>
 
                             {/* Professional Gradient Overlay */}
-                            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none z-20" />
+                            <div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background via-background/80 to-transparent pointer-events-none z-20" />
 
                             <div className="absolute bottom-6 left-0 right-0 text-center z-30">
                                 <span className="text-[9px] text-muted-foreground font-mono italic opacity-40">

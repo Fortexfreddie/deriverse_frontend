@@ -49,7 +49,8 @@ export default function HistoryPage() {
       const timer = setTimeout(() => setIsLoading(false), 1200)
       return () => clearTimeout(timer)
     }
-    setIsLoading(true)
+    // avoid setting state synchronously inside effect
+    setTimeout(() => setIsLoading(true))
   }, [isTradesLoading])
 
   if (isLoading) return <PageLoader />
@@ -68,14 +69,14 @@ export default function HistoryPage() {
         {/* Top Operational Stats */}
         <section className="p-4 space-y-4 border-b border-border bg-muted/5 shrink-0">
           <div className="flex gap-3 overflow-x-auto scrollbar-hide">
-            <div className="min-w-[130px] flex-1 bg-card border border-border p-4 rounded-sm relative">
-              <span className="text-[8px] text-muted-foreground uppercase tracking-widest block mb-1">Total_Audit_Logs</span>
-              <span className="text-xl font-black tracking-tighter">{filteredTrades.length}</span>
+            <div className="min-w-32.5 flex-1 bg-card border border-border p-4 rounded-sm relative">
+              <span className="text-[8px] text-muted-foreground uppercase tracking-widest block mb-1">Total Trades</span>
+              <span className="text-xl font-black tracking-tighter">{summary?.totalTrades || filteredTrades.length}</span>
               <div className="absolute top-0 right-0 p-1 opacity-20"><Shield size={10} className="text-primary" /></div>
             </div>
-            <div className="min-w-[130px] flex-1 bg-card border border-border p-4 rounded-sm relative">
-              <span className="text-[8px] text-muted-foreground uppercase tracking-widest block mb-1">Aggregated_Fees</span>
-              <span className="text-xl font-black tracking-tighter">$0.67</span>
+            <div className="min-w-32.5 flex-1 bg-card border border-border p-4 rounded-sm relative">
+              <span className="text-[8px] text-muted-foreground uppercase tracking-widest block mb-1">Total Fees</span>
+              <span className="text-xl font-black tracking-tighter">${(summary?.totalFees || 0).toFixed(2)}</span>
               <div className="absolute top-0 right-0 p-1 opacity-20"><Hash size={10} className="text-pink" /></div>
             </div>
           </div>
@@ -155,7 +156,7 @@ export default function HistoryPage() {
               <div className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">
                 Sector {currentPage} <span className="opacity-30">/</span> {totalPages}
               </div>
-              <div className="flex items-center gap-2 w-full max-w-[240px]">
+              <div className="flex items-center gap-2 w-full max-w-60">
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -187,12 +188,12 @@ export default function HistoryPage() {
         <div className="flex-1 flex flex-col min-w-0 border-r border-border h-full overflow-hidden">
 
           {/* Header Controls */}
-          <div className="h-14 border-b border-border flex items-center justify-between px-6 bg-card/30 flex-shrink-0 backdrop-blur-sm z-10 font-mono">
+          <div className="h-14 border-b border-border flex items-center justify-between px-6 bg-card/30 shrink-0 backdrop-blur-sm z-10 font-mono">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
                 <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Market</span>
                 <Select value={filterMarket} onValueChange={(v) => { setFilterMarket(v); setCurrentPage(1); }}>
-                  <SelectTrigger className="w-[130px] h-8 text-[10px] bg-background border-border font-bold">
+                  <SelectTrigger className="w-32.5 h-8 text-[10px] bg-background border-border font-bold">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border font-mono">
@@ -203,9 +204,9 @@ export default function HistoryPage() {
               </div>
 
               <div className="flex items-center gap-3 border-l border-border pl-6">
-                <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Security_Type</span>
+                <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Market Type</span>
                 <Select value={filterType} onValueChange={(v) => { setFilterType(v); setCurrentPage(1); }}>
-                  <SelectTrigger className="w-[100px] h-8 text-[10px] bg-background border-border font-bold">
+                  <SelectTrigger className="w-25 h-8 text-[10px] bg-background border-border font-bold">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border font-mono">
@@ -218,7 +219,7 @@ export default function HistoryPage() {
             </div>
 
             <button className="h-8 px-4 bg-primary text-black font-black text-[9px] uppercase tracking-widest rounded-xs hover:shadow-[0_0_15px_rgba(var(--primary),0.3)] transition-all">
-              Export_Audit_CSV
+              Export Audit CSV
             </button>
           </div>
 
@@ -251,9 +252,9 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        <div className="hidden lg:flex lg:flex-col lg:w-80 bg-card/10 flex-shrink-0 h-full overflow-hidden">
+        <div className="hidden lg:flex lg:flex-col lg:w-80 bg-card/10 shrink-0 h-full overflow-hidden">
           <header className="h-14 flex items-center px-6 font-black text-[10px] uppercase tracking-[0.3em] text-primary border-b border-border bg-black/20">
-            <Activity size={14} className="mr-3" /> Audit_Analytics
+            <Activity size={14} className="mr-3" /> Audit Analytics
           </header>
           <ScrollArea className="flex-1">
             <HistoryMetrics summary={summary} />

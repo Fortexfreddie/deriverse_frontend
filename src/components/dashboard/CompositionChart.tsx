@@ -29,7 +29,7 @@ export function CompositionChart({ data }: CompositionChartProps) {
   const chartData = data || mockData;
 
   return (
-    <div className="w-full h-full min-h-[250px] flex flex-col">
+    <div className="w-full h-full min-h-62.5 flex flex-col">
        <div className="flex items-center justify-between mb-2 px-2">
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">PORTFOLIO_COMPOSITION</span>
             <span className="text-[10px] text-primary font-mono bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">LIVE</span>

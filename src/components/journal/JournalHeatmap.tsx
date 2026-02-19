@@ -8,6 +8,16 @@ import { motion } from 'framer-motion'
 
 export interface HeatmapTrade {
     id: string
+    positionId?: string
+    signature?: string
+    price?: number
+    fee?: number
+    isEntry?: boolean
+    orderType?: string
+    tradeType?: string
+    notes?: string | null
+    metadata?: Record<string, any> | null
+    rawData?: Record<string, any> | null
     symbol: string
     side: 'LONG' | 'SHORT'
     size: number
@@ -95,7 +105,7 @@ export function JournalHeatmap({ journalData, currentMonth, onMonthChange, onDay
                     initial="hidden"
                     animate="show"
                     key={currentMonth.toISOString()} // Force re-render on month change
-                    className="w-full max-w-[600px] grid grid-cols-7 gap-1 md:gap-1.5"
+                    className="w-full max-w-150 grid grid-cols-7 gap-1 md:gap-1.5"
                 >
                     {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map(day => (
                         <motion.div variants={item} key={day} className="text-[8px] md:text-[9px] text-center text-muted-foreground font-bold mb-1 opacity-40">

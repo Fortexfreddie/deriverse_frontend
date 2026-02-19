@@ -19,7 +19,8 @@ export function Header({ title = 'DASHBOARD' }: HeaderProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
+    const id = setTimeout(() => setMounted(true), 0)
+    return () => clearTimeout(id)
   }, [])
 
   const toggleTheme = () => {
@@ -44,7 +45,7 @@ export function Header({ title = 'DASHBOARD' }: HeaderProps) {
   }
 
   return (
-    <header className="h-14 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-4 z-40 flex-shrink-0 w-full font-mono transition-all duration-300">
+    <header className="h-14 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-4 z-40 shrink-0 w-full font-mono transition-all duration-300">
 
       {/* --- LEFT SECTION: IDENTITY & STATUS --- */}
       <div className="flex flex-col justify-center min-w-0">

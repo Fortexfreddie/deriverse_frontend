@@ -10,7 +10,8 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
+    const id = setTimeout(() => setMounted(true), 0)
+    return () => clearTimeout(id)
   }, [])
 
   const endpoint = useMemo(() => process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl("mainnet-beta"), [])

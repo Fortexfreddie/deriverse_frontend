@@ -69,6 +69,10 @@ export interface TradeEvent {
     orderType: string;
     tradeType: string;
     notes: string | null;
+    // arbitrary metadata from backend (e.g. calculated pnl, tags, etc.)
+    metadata?: Record<string, any> | null;
+    // raw trade details often populated by the core service
+    rawData?: Record<string, any> | null;
     timestamp: string;
     position: TradePosition;
 }

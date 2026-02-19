@@ -45,16 +45,16 @@ export function PnLChart({ metrics, chartData }: PnLChartProps) {
   }))
 
   return (
-    <div className="flex-1 px-2 sm:px-6 pb-4 sm:pb-6 min-h-[250px] sm:min-h-[300px] flex flex-col bg-secondary">
+    <div className="flex-1 px-2 sm:px-6 pb-4 sm:pb-6 min-h-62.5 sm:min-h-75 flex flex-col bg-secondary">
       <div className="h-8 flex items-center justify-between mb-2">
         <span className="text-[9px] sm:text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-          PERFORMANCE_CHART // LIVE
+          PERFORMANCE_CHART
         </span>
       </div>
 
       <div className="flex-1 border border-border bg-card rounded relative overflow-hidden flex flex-col sm:flex-row">
         {/* Chart Area */}
-        <div className="w-full sm:w-2/3 border-b sm:border-b-0 sm:border-r border-border relative min-h-[150px] sm:min-h-auto">
+        <div className="w-full sm:w-2/3 border-b sm:border-b-0 sm:border-r border-border relative min-h-37.5 sm:min-h-auto">
           <div className="absolute inset-0 p-2 sm:p-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={finalData}>

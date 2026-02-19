@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Edit2 } from 'lucide-react'
 import { useJournalSubmission } from '@/hooks/use-journal-submission'
 import type { HeatmapTrade } from './JournalHeatmap'
 import type { JournalAnalysis } from '@/lib/api'
+import { ObjectViewer } from '@/components/ui/object-viewer'
 
 interface TradeDossierProps {
     trade: HeatmapTrade
@@ -17,6 +18,9 @@ interface TradeDossierProps {
 const EMOTIONS = ['Fearful', 'Anxious', 'Neutral', 'Calm', 'Greedy'] as const
 
 export function TradeDossier({ trade, isDemo, onBack, onAnalysisReceived }: TradeDossierProps) {
+    // keep a mutable copy so we can merge patch responses
+    const [tradeData, setTradeData] = useState<HeatmapTrade>(trade)
+
     const [formData, setFormData] = useState({
         notes: '',
         emotion: 'Neutral' as typeof EMOTIONS[number],
@@ -24,17 +28,23 @@ export function TradeDossier({ trade, isDemo, onBack, onAnalysisReceived }: Trad
         hypotheticalExitPrice: 0,
     })
 
-    // Sync form when trade changes
+    // keep local tradeData in sync with prop
     useEffect(() => {
-        setFormData({
-            notes: trade.position?.notes || '',
-            emotion: (trade.position?.emotion as typeof EMOTIONS[number]) || 'Neutral',
-            rating: trade.position?.rating || 0,
-            hypotheticalExitPrice: trade.position?.hypotheticalExitPrice || 0,
+        // avoid synchronous setState inside effect
+        setTimeout(() => setTradeData(trade))
+        // populate the form based on incoming trade
+        setTimeout(() => {
+            setFormData({
+                notes: trade.position?.notes || '',
+                emotion: (trade.position?.emotion as typeof EMOTIONS[number]) || 'Neutral',
+                rating: trade.position?.rating || 0,
+                hypotheticalExitPrice: trade.position?.hypotheticalExitPrice || 0,
+            })
         })
     }, [trade])
 
-    const { mutate: submitJournal, isPending: isSubmitting } = useJournalSubmission(trade.id, isDemo)
+    const positionId = tradeData.positionId || tradeData.position?.id || tradeData.id
+    const { mutate: submitJournal, isPending: isSubmitting } = useJournalSubmission(positionId, isDemo)
 
     const handleSave = () => {
         const payload = {
@@ -51,6 +61,13 @@ export function TradeDossier({ trade, isDemo, onBack, onAnalysisReceived }: Trad
 
         submitJournal(payload, {
             onSuccess: (response) => {
+                // merge updated position data into local trade copy
+                const updated = response.data || {}
+                setTradeData(prev => ({
+                    ...prev,
+                    ...updated,
+                    position: { ...prev.position, ...updated }
+                }))
                 onAnalysisReceived(response.analysis)
             },
         })
@@ -90,26 +107,60 @@ export function TradeDossier({ trade, isDemo, onBack, onAnalysisReceived }: Trad
                             <Edit2 size={14} className="text-primary" /> EXECUTION_LOG
                         </h4>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6">
                             <div>
                                 <div className="text-[10px] uppercase text-muted-foreground mb-1">Market</div>
-                                <div className="text-sm font-mono font-bold">{trade.symbol}</div>
+                                <div className="text-sm font-mono font-bold">{tradeData.symbol}</div>
                             </div>
                             <div>
                                 <div className="text-[10px] uppercase text-muted-foreground mb-1">Side</div>
-                                <div className={`text-sm font-mono font-bold ${trade.side === 'LONG' ? 'text-primary' : 'text-pink'}`}>
-                                    {trade.side}
+                                <div className={`text-sm font-mono font-bold ${tradeData.side === 'LONG' ? 'text-primary' : 'text-pink'}`}>
+                                    {tradeData.side}
                                 </div>
                             </div>
                             <div>
                                 <div className="text-[10px] uppercase text-muted-foreground mb-1">Size</div>
-                                <div className="text-sm font-mono font-bold">{trade.size}</div>
+                                <div className="text-sm font-mono font-bold">{tradeData.size}</div>
+                            </div>
+                            <div>
+                                <div className="text-[10px] uppercase text-muted-foreground mb-1">Price</div>
+                                <div className="text-sm font-mono font-bold">{tradeData.price ?? '—'}</div>
+                            </div>
+                            <div>
+                                <div className="text-[10px] uppercase text-muted-foreground mb-1">Fee</div>
+                                <div className="text-sm font-mono font-bold">{tradeData.fee ?? '—'}</div>
+                            </div>
+                            <div>
+                                <div className="text-[10px] uppercase text-muted-foreground mb-1">Order type</div>
+                                <div className="text-sm font-mono font-bold">{tradeData.orderType ?? '—'}</div>
                             </div>
                             <div>
                                 <div className="text-[10px] uppercase text-muted-foreground mb-1">Time</div>
-                                <div className="text-sm font-mono font-bold">{format(trade.timestamp, 'HH:mm:ss')}</div>
+                                <div className="text-sm font-mono font-bold">
+                                    {format(new Date(tradeData.timestamp), 'MMM d yyyy HH:mm:ss')}
+                                </div>
                             </div>
                         </div>
+
+                        {/* additional details */}
+                        {tradeData.rawData && (
+                          <div className="mb-6">
+                            <div className="text-[10px] text-muted-foreground uppercase mb-1">Raw data</div>
+                            <ObjectViewer obj={tradeData.rawData} />
+                          </div>
+                        )}
+                        {tradeData.metadata && (
+                          <div className="mb-6">
+                            <div className="text-[10px] text-muted-foreground uppercase mb-1">Metadata</div>
+                            <ObjectViewer obj={tradeData.metadata} />
+                          </div>
+                        )}
+                        {tradeData.position && (
+                          <div className="mb-6">
+                            <div className="text-[10px] text-muted-foreground uppercase mb-1">Position details</div>
+                            <ObjectViewer obj={tradeData.position} />
+                          </div>
+                        )}
 
                         {/* Form Fields */}
                         <div className="space-y-5">
@@ -117,7 +168,7 @@ export function TradeDossier({ trade, isDemo, onBack, onAnalysisReceived }: Trad
                             <div>
                                 <label className="text-[10px] uppercase text-muted-foreground block mb-2 font-bold">Notes</label>
                                 <textarea
-                                    className="w-full bg-background border border-border rounded-sm p-3 text-xs font-mono focus:ring-1 focus:ring-primary/30 focus:border-primary/50 outline-none min-h-[100px] md:min-h-[120px] transition-all resize-none"
+                                    className="w-full bg-background border border-border rounded-sm p-3 text-xs font-mono focus:ring-1 focus:ring-primary/30 focus:border-primary/50 outline-none min-h-25 md:min-h-30 transition-all resize-none"
                                     placeholder="What was your thesis? What did you learn?"
                                     value={formData.notes}
                                     onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
@@ -168,7 +219,7 @@ export function TradeDossier({ trade, isDemo, onBack, onAnalysisReceived }: Trad
                                 <input
                                     type="number"
                                     step="0.01"
-                                    className="w-full max-w-[200px] bg-background border border-border rounded-sm p-3 text-xs font-mono focus:ring-1 focus:ring-primary/30 focus:border-primary/50 outline-none transition-all"
+                                    className="w-full max-w-50 bg-background border border-border rounded-sm p-3 text-xs font-mono focus:ring-1 focus:ring-primary/30 focus:border-primary/50 outline-none transition-all"
                                     placeholder="0.00"
                                     value={formData.hypotheticalExitPrice || ''}
                                     onChange={(e) => setFormData(prev => ({ ...prev, hypotheticalExitPrice: parseFloat(e.target.value) || 0 }))}

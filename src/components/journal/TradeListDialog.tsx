@@ -38,7 +38,7 @@ export function TradeListDialog({ open, onOpenChange, selectedDate, trades, isDe
 
     const handleAnalysisClose = () => {
         setAnalysisResult(null)
-        setSelectedTrade(null)
+        // keep selectedTrade so the dossier stays open with updated info
     }
 
     // Determine what to show in the right panel

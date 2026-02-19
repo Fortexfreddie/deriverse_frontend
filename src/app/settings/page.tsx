@@ -54,7 +54,7 @@ export default function SettingsPage() {
                              <div className="text-sm font-bold text-foreground">Privacy Mode</div>
                              {privacyMode && <span className="bg-primary/20 text-primary text-[9px] px-1.5 py-0.5 rounded font-mono uppercase">Active</span>}
                          </div>
-                         <div className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
+                         <div className="text-xs text-muted-foreground leading-relaxed max-w-70">
                            Blur sensitive values (PnL, Balance) for screenshots sharing.
                          </div>
                     </div>
@@ -68,7 +68,7 @@ export default function SettingsPage() {
                              <div className="text-sm font-bold text-foreground">Streamer Mode</div>
                              {streamerMode && <span className="bg-accent-pink/20 text-accent-pink text-[9px] px-1.5 py-0.5 rounded font-mono uppercase">Live</span>}
                          </div>
-                         <div className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
+                         <div className="text-xs text-muted-foreground leading-relaxed max-w-70">
                            Hide wallet address and transaction signatures from UI.
                          </div>
                     </div>
@@ -209,7 +209,7 @@ export default function SettingsPage() {
                          <div className="flex items-center gap-2 mb-1">
                              <div className="text-sm font-bold text-foreground">Telegram Webhook</div>
                          </div>
-                         <div className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
+                         <div className="text-xs text-muted-foreground leading-relaxed max-w-70">
                            Push execution fills to private channel.
                          </div>
                     </div>
@@ -221,7 +221,7 @@ export default function SettingsPage() {
                          <div className="flex items-center gap-2 mb-1">
                              <div className="text-sm font-bold text-foreground">Browser Alerts</div>
                          </div>
-                         <div className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
+                         <div className="text-xs text-muted-foreground leading-relaxed max-w-70">
                            Sound alerts on fill/SL hit.
                          </div>
                     </div>

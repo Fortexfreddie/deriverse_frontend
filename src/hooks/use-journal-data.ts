@@ -42,13 +42,24 @@ export function useJournalData(currentMonth: Date) {
     const isLoading = heatmapQuery.isLoading || tradesQuery.isLoading
 
     // Merge Data
-    let journalData: Record<string, any[]> = {}
+    const journalData: Record<string, any[]> = {}
 
     if (isDemo) {
-        // Map rich heatmap trades to journalData format
+        // Map rich heatmap trades to journalData format; include as many fields as available
         Object.entries(MOCK_HEATMAP).forEach(([dateStr, dayData]) => {
             journalData[dateStr] = dayData.trades.map(trade => ({
                 id: trade.id,
+                positionId: trade.positionId,
+                signature: trade.signature,
+                price: trade.price,
+                fee: trade.fee,
+                isEntry: trade.isEntry,
+                orderType: trade.orderType,
+                tradeType: trade.tradeType,
+                notes: trade.notes,
+                metadata: trade.metadata,
+                rawData: trade.rawData,
+
                 symbol: trade.market,
                 side: trade.side,
                 size: trade.totalSize,
@@ -63,9 +74,20 @@ export function useJournalData(currentMonth: Date) {
             tradesQuery.data.forEach((trade: any) => {
                 const dateStr = format(new Date(trade.timestamp), 'yyyy-MM-dd')
                 if (!journalData[dateStr]) journalData[dateStr] = []
-                
+
                 journalData[dateStr].push({
                     id: trade.id,
+                    positionId: trade.positionId,
+                    signature: trade.signature,
+                    price: trade.price,
+                    fee: trade.fee,
+                    isEntry: trade.isEntry,
+                    orderType: trade.orderType,
+                    tradeType: trade.tradeType,
+                    notes: trade.notes,
+                    metadata: trade.metadata,
+                    rawData: trade.rawData,
+
                     symbol: trade.position.market,
                     side: trade.position.side,
                     size: trade.size,

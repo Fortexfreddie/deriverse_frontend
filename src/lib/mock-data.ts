@@ -272,6 +272,7 @@ export const portfolioCompositionData = [
 ]
 
 // Heatmap Mock Data
+ 
 export const heatmapData: Record<string, { pnl: number; count: number; trades: any[] }> = {
   "2026-02-02": {
     "pnl": 300.50,
@@ -424,8 +425,10 @@ export const psychologyData = {
     }
 }
 
+import { TradeEvent } from '@/lib/api';
+
 // Trade history
-export const tradeHistory = [
+export const tradeHistory: TradeEvent[] = [
     {
       id: "793462a0-4e2a-4dc0-a566-bb843148573f",
       signature: "127pQHsV29x7NboLdAxNXqZfifTXrPt5cvGuj1WS8nNLTZSWGUUB8GhoYiAVXTVEaV9uQg6QPksfhRVJwza4dz2K",
@@ -436,7 +439,9 @@ export const tradeHistory = [
       isEntry: true,
       orderType: "MARKET",
       tradeType: "SPOT",
-      notes: null,
+      notes: "First trade note",
+      metadata: null,
+      rawData: { funding: 0, socLoss: 0 },
       timestamp: "2026-02-16T17:18:04.000Z",
       position: {
         id: "0-SELL-20500-FK4ugTURYRR2hbSDZr1Q1kqU4xX4UQP7o28cr3wUpG2q",
@@ -449,10 +454,12 @@ export const tradeHistory = [
         totalSize: 1.5296,
         totalFees: 0.0420,
         realizedPnl: 0,
-        notes: null,
+        // demo journal defaults
+        notes: "Demo note: entered on breakout",
+        emotion: "Anxious",
+        rating: 4,
+        hypotheticalExitPrice: 85.0,
         strategyUsed: null,
-        rating: null,
-        emotion: null,
         aiReview: null,
         aiBias: null,
         aiInsight: null,
@@ -460,7 +467,7 @@ export const tradeHistory = [
         aiScore: null,
         aiNextAction: null,
         actualExitPrice: null,
-        hypotheticalExitPrice: null,
+        
         opportunityCost: null,
         opportunityCostNote: null,
         newsHeadlines: null,
@@ -484,7 +491,7 @@ export const tradeHistory = [
       isEntry: true,
       orderType: "MARKET",
       tradeType: "SPOT",
-      notes: null,
+      notes: "Second trade note",
       timestamp: "2026-02-16T17:10:08.000Z", 
       position: {
         id: "0-SELL-20500-FK4ugTURYRR2hbSDZr1Q1kqU4xX4UQP7o28cr3wUpG2q",
@@ -531,8 +538,8 @@ export const tradeHistory = [
       fee: 0.04184,
       isEntry: true,
       orderType: "MARKET",
+      notes: "Third trade note",
       tradeType: "PERP",
-      notes: null,
       timestamp: "2026-02-16T16:25:33.000Z",
       position: {
         id: "0-BUY-20500-FK4ugTURYRR2hbSDZr1Q1kqU4xX4UQP7o28cr3wUpG2q",
@@ -666,7 +673,11 @@ export const tradeHistory = [
         closedAt: null
       }
     }
-]
+].map(t => ({
+    ...t,
+    metadata: t.metadata ?? null,
+    rawData: t.rawData ?? { funding: 0, socLoss: 0 }
+}));
 
 export const tradeSummary = {
     totalTrades: 18,

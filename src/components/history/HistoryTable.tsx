@@ -17,10 +17,12 @@ export function HistoryTable({ trades, onTradeClick }: HistoryTableProps) {
     <>
       {/* Desktop Table View */}
       <div className="hidden sm:block flex-1 overflow-x-auto custom-scrollbar">
-        <div className="grid grid-cols-12 gap-2 px-4 sm:px-6 py-3 border-b border-border bg-card text-[10px] text-muted-foreground font-bold uppercase tracking-wider flex-shrink-0 sticky top-0 z-10">
+        <div className="grid grid-cols-14 gap-2 px-4 sm:px-6 py-3 border-b border-border bg-card text-[10px] text-muted-foreground font-bold uppercase tracking-wider shrink-0 sticky top-0 z-10">
           <div className="col-span-2 whitespace-nowrap">TIMESTAMP</div>
           <div className="col-span-2 whitespace-nowrap">MARKET</div>
           <div className="col-span-1 whitespace-nowrap">SIDE</div>
+          <div className="col-span-1 text-center whitespace-nowrap" title="Entry / Exit abbreviates whether the trade was an entry or exit">E/X</div>
+          <div className="col-span-1 text-center whitespace-nowrap">ORDER</div>
           <div className="col-span-2 text-right whitespace-nowrap">PRICE</div>
           <div className="col-span-2 text-right whitespace-nowrap">SIZE</div>
           <div className="hidden md:block col-span-1 text-right whitespace-nowrap">FEE</div>
@@ -43,7 +45,7 @@ export function HistoryTable({ trades, onTradeClick }: HistoryTableProps) {
             <div
               key={trade.id}
               onClick={() => onTradeClick?.(trade)}
-              className="grid grid-cols-12 gap-2 px-4 sm:px-6 py-3 border-b border-border hover:bg-muted/50 cursor-pointer transition-colors text-xs font-mono group"
+              className="grid grid-cols-14 gap-2 px-4 sm:px-6 py-3 border-b border-border hover:bg-muted/50 cursor-pointer transition-colors text-xs font-mono group"
             >
               <div className="col-span-2 text-muted-foreground whitespace-nowrap text-[10px] flex items-center tracking-tighter sm:tracking-normal">{formatDate(trade.timestamp)}</div>
               <div className="col-span-2 text-foreground font-bold">{market}</div>
@@ -54,6 +56,10 @@ export function HistoryTable({ trades, onTradeClick }: HistoryTableProps) {
               >
                 {side}
               </div>
+              <div className="col-span-1 text-center text-xs font-bold">
+                {trade.isEntry ? 'E' : 'X'}
+              </div>
+              <div className="col-span-1 text-center text-xs">{trade.orderType}</div>
               <div className="col-span-2 text-right text-foreground">{trade.price.toFixed(2)}</div>
               <div className="col-span-2 text-right text-muted-foreground">{trade.size.toFixed(4)}</div>
               <div className="hidden md:block col-span-1 text-right text-muted-foreground">{trade.fee.toFixed(4)}</div>
@@ -96,18 +102,22 @@ export function HistoryTable({ trades, onTradeClick }: HistoryTableProps) {
                 </span>
               </div>
 
-              {/* Market and Side */}
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div>
+              {/* Market/Side and extras */}
+              <div className="flex flex-col gap-1 mb-3">
+                <div className="flex items-center justify-between">
                   <div className="text-foreground font-bold text-sm">{market}</div>
+                  <span
+                    className={`font-bold text-sm ${
+                      side === 'LONG' ? 'text-pnl-gain' : 'text-accent-pink'
+                    }`}
+                  >
+                    {side}
+                  </span>
                 </div>
-                <span
-                  className={`font-bold text-sm ${
-                    side === 'LONG' ? 'text-pnl-gain' : 'text-accent-pink'
-                  }`}
-                >
-                  {side}
-                </span>
+                <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+                  <span>{trade.isEntry ? 'Entry' : 'Exit'}</span>
+                  <span>{trade.orderType}</span>
+                </div>
               </div>
 
               {/* Price and Size */}

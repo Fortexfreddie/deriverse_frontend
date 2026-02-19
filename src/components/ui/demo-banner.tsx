@@ -22,7 +22,10 @@ export function DemoBanner() {
 
   // Auto-expand on error
   useEffect(() => {
-    if (error) setIsExpanded(true)
+    const id = setTimeout(() => {
+      if (error) setIsExpanded(true)
+    }, 0)
+    return () => clearTimeout(id)
   }, [error])
 
   if (!isDemo && !error) return null

@@ -4,7 +4,17 @@ import { useEffect, useState } from 'react'
 
 export function BootLoader({ onComplete }: { onComplete?: () => void }) {
   const [progress, setProgress] = useState(0)
-  const [logs, setLogs] = useState<any[]>([])
+  interface BootLog {
+    id: number
+    time: string
+    label: string
+    message: string
+    status: string
+    color: string
+    delay: number
+  }
+
+  const [logs, setLogs] = useState<BootLog[]>([])
 
   useEffect(() => {
     // Progress animation to match the visual feel
@@ -60,13 +70,13 @@ export function BootLoader({ onComplete }: { onComplete?: () => void }) {
       <div className="fixed inset-0 bg-grid-pattern bg-grid-size opacity-20 pointer-events-none z-0"></div>
       
       {/* CRT Overlay */}
-      <div className="fixed inset-0 bg-gradient-to-b from-transparent to-black/20 pointer-events-none z-50 crt-flicker"></div>
+      <div className="fixed inset-0 bg-linear-to-b from-transparent to-black/20 pointer-events-none z-50 crt-flicker"></div>
       
       {/* Vignette */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)] pointer-events-none z-10"></div>
       
       {/* Main Content Area */}
-      <main className="relative z-20 flex-grow flex flex-col items-center justify-center p-6 w-full max-w-7xl mx-auto h-screen">
+      <main className="relative z-20 grow flex flex-col items-center justify-center p-6 w-full max-w-7xl mx-auto h-screen">
         
         {/* System Status Header (Top Left) */}
         <div className="absolute top-4 left-4 md:top-8 md:left-8 font-mono text-[10px] md:text-xs text-[#00ffc4]/60 tracking-widest border border-[#00ffc4]/20 p-2 rounded z-30 bg-[#050505]/80 backdrop-blur-sm">
@@ -105,7 +115,7 @@ export function BootLoader({ onComplete }: { onComplete?: () => void }) {
             </div>
             
             {/* Progress Bar Container */}
-            <div className="h-6 w-full border border-[#1A1A1A] bg-[#050505] relative p-[2px]">
+            <div className="h-6 w-full border border-[#1A1A1A] bg-[#050505] relative p-0.5">
               {/* Filled Bar */}
               <div 
                 className="h-full bg-[#00ffc4] relative overflow-hidden shadow-[0_0_15px_rgba(0,255,196,0.3)] transition-all duration-75 ease-linear"
@@ -134,13 +144,13 @@ export function BootLoader({ onComplete }: { onComplete?: () => void }) {
             <div className="flex flex-col gap-1.5 text-gray-400">
                {logs.map((log, index) => (
                 <div key={index} className="flex gap-3">
-                  <span className="text-gray-600 min-w-[60px] text-[10px] md:text-xs">[{log.time}]</span>
+                  <span className="text-gray-600 min-w-15 text-[10px] md:text-xs">[{log.time}]</span>
                   <span className="uppercase">[{log.label}] {log.message}</span>
                   <span className={`${log.color} ml-auto font-bold`}>{log.status}</span>
                 </div>
               ))}
               <div className="flex gap-3 mt-1 text-[#00ffc4]">
-                <span className="text-[#00ffc4]/50 min-w-[60px]">&gt;</span>
+                <span className="text-[#00ffc4]/50 min-w-15">&gt;</span>
                 <span className="cursor-blink">_</span>
               </div>
             </div>
