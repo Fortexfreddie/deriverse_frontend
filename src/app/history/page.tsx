@@ -6,6 +6,7 @@ import { HistoryTable } from '@/components/history/HistoryTable'
 import { HistoryMetrics } from '@/components/history/HistoryMetrics'
 import { PageLoader } from '@/components/PageLoader'
 import { TradeDetailSidebar } from '@/components/history/TradeDetailSidebar'
+import { ObjectViewer } from '@/components/ui/object-viewer'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TradeEvent } from '@/lib/api'
 import { parsePositionId, formatDate } from '@/lib/utils'
@@ -43,6 +44,7 @@ export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTrade, setSelectedTrade] = useState<TradeEvent | null>(null)
   const [detailSidebarOpen, setDetailSidebarOpen] = useState(false)
+  const [lastApiResponse, setLastApiResponse] = useState<any | null>(null)
 
   useEffect(() => {
     if (!isTradesLoading) {
@@ -258,6 +260,21 @@ export default function HistoryPage() {
           </header>
           <ScrollArea className="flex-1">
             <HistoryMetrics summary={summary} />
+            {lastApiResponse && (
+              <div className="p-3 mt-3 bg-card border border-border rounded-sm text-xs">
+                <div className="text-[10px] font-black uppercase text-muted-foreground mb-2">Last API response</div>
+                <div className="text-[12px] text-foreground mb-2">
+                  {lastApiResponse.data?.aiReview && <div className="mb-2">{lastApiResponse.data.aiReview}</div>}
+                  <div className="text-[11px] font-bold">AI Score: {lastApiResponse.data?.aiScore ?? lastApiResponse.analysis?.aiAnalysis?.score ?? '—'}</div>
+                </div>
+                <details className="text-xs text-muted-foreground">
+                  <summary className="cursor-pointer">View raw response</summary>
+                  <div className="mt-2">
+                    <ObjectViewer obj={lastApiResponse} />
+                  </div>
+                </details>
+              </div>
+            )}
           </ScrollArea>
         </div>
       </div>
@@ -266,6 +283,7 @@ export default function HistoryPage() {
         trade={selectedTrade}
         isOpen={detailSidebarOpen}
         onClose={() => setDetailSidebarOpen(false)}
+        onUpdated={(res) => setLastApiResponse(res)}
       />
     </DashboardLayout>
   )

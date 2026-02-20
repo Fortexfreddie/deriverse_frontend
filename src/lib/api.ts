@@ -239,16 +239,17 @@ export interface JournalAnalysis {
         weakness: string;
         nudge: string;
         winRate: number;
+        avgHoldTime?: number;
     };
     macroContext: {
         sentiment: string;
         macroContext: string;
         headlines?: string[];
     };
-    whatIfAnalysis: {
-        opportunityCost: number;
-        opportunityCostNote: string;
-    };
+    whatIfAnalysis?: {
+        opportunityCost?: number | null;
+        opportunityCostNote?: string | null;
+    } | null;
 }
 
 // API Functions
@@ -302,14 +303,14 @@ export async function fetchTrades(
     }
     const queryString = params.toString();
     const endpoint = `/trades/${wallet}${queryString ? `?${queryString}` : ''}`;
-    
+
     // Manual fetch to handle custom response structure (summary/pagination siblings)
     const res = await fetch(`${API_URL}${endpoint}`);
     if (!res.ok) {
         const errorBody = await res.json().catch(() => ({}));
         throw new Error(errorBody.error || `API request failed: ${res.statusText} (${res.status})`);
     }
-    
+
     const json = await res.json();
     if (!json.success) {
         throw new Error(json.error || 'API request failed');
@@ -453,7 +454,7 @@ export async function submitJournal(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
     });
-    
+
     if (!res.ok) {
         const errorBody = await res.json().catch(() => ({}));
         throw new Error(errorBody.error || `API request failed: ${res.statusText}`);

@@ -7,9 +7,13 @@ import { mockAnalysisResult } from '@/lib/mock-data'
 export function useJournalSubmission(positionId: string, isDemo?: boolean) {
     const queryClient = useQueryClient()
 
-    return useMutation({
-        mutationFn: async (data: any) => {
-            // Client-side validation
+    return useMutation<
+        { data: any; analysis: any },
+        Error,
+        Partial<JournalEntryUpdate>
+    >({
+        mutationFn: async (data) => {
+            // Client-side validation (allows partial updates)
             const result = journalSchema.safeParse(data)
             if (!result.success) {
                 throw new Error(result.error.issues[0].message)
@@ -30,7 +34,11 @@ export function useJournalSubmission(positionId: string, isDemo?: boolean) {
              toast.success('TRADE_ANALYSIS_GENERATED')
              // Invalidate journal queries if not in demo
              if (!isDemo) {
-                queryClient.invalidateQueries({ queryKey: ['journal', positionId] })
+                                queryClient.invalidateQueries({ queryKey: ['journal', positionId] })
+                                // Also invalidate trade history so the UI refreshes after a journal patch
+                                queryClient.invalidateQueries({
+                                    predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] === 'trades'
+                                })
              }
         },
         onError: (error) => {

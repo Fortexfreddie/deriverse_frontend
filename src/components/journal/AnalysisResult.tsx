@@ -120,7 +120,8 @@ export function AnalysisResult({ analysis, onClose }: AnalysisResultProps) {
                     </div>
 
                     {/* What-If Card */}
-                    {analysis.whatIfAnalysis && (
+                    {analysis.whatIfAnalysis &&
+                      typeof analysis.whatIfAnalysis.opportunityCost === 'number' && (
                         <div className="bg-card border border-border p-5 md:p-6 rounded-sm space-y-3">
                             <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">What-If Analysis</div>
                             <div className="text-2xl font-black font-mono text-pink">
