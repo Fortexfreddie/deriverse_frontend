@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/DashboardLayout'
 import { PageLoader } from '@/components/PageLoader'
 import { DrawdownChart } from '@/components/dashboard/DrawdownChart'
 import { MainAnalyticsChart } from '@/components/dashboard/MainAnalyticsChart'
-import { RefreshCcw } from 'lucide-react'
+import { RefreshCcw, Percent, Zap, Scale, ArrowUpDown, Activity, Hash, AlertTriangle } from 'lucide-react'
 
 import { DatePicker } from '@/components/ui/date-picker'
 import { CompositionChart } from '@/components/dashboard/CompositionChart'
@@ -49,6 +49,7 @@ export default function AnalyticsPage() {
     compositionData,
     historicalPnlData,
     drawdownData,
+    behaviorData,
     isLoading,
     refetch,
     isDemo
@@ -65,6 +66,13 @@ export default function AnalyticsPage() {
     pnl: `$${data.pnl.toFixed(2)}`,
     return: `${data.pnl >= 0 ? '+' : ''}${((data.pnl / (analyticsData.totalPnl.total || 1)) * 100).toFixed(1)}%`
   })) : undefined
+
+  // Dynamically pick top market from marketPerformance
+  const topMarketEntry = analyticsData?.marketPerformance
+    ? Object.entries(analyticsData.marketPerformance).sort((a, b) => Math.abs(b[1].pnl) - Math.abs(a[1].pnl))[0]
+    : undefined
+  const topMarketKey = topMarketEntry?.[0] || 'N/A'
+  const topMarketData = topMarketEntry?.[1] || { pnl: 0, volume: 0, winRate: 0, tradeCount: 0 }
 
   // Min loader time for UX consistency
   const [showLoader, setShowLoader] = useState(true)
@@ -83,9 +91,6 @@ export default function AnalyticsPage() {
   if (showLoader) {
     return <PageLoader />
   }
-
-  // Helper to safely access market data, ensuring fallback if data is missing or structure changes
-  const solData = analyticsData?.marketPerformance?.['SOL-USDC'] || { pnl: 0, volume: 0, winRate: 0, tradeCount: 0 }
 
   return (
     <DashboardLayout title="ANALYTICS">
@@ -175,28 +180,71 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* SOL-PERP Metrics Grid */}
+        {/* Behavioral Metrics (Mobile) */}
+        {behaviorData && (
+          <div className="px-2 pb-2">
+            <div className="bg-card border border-border rounded p-3">
+              <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3 font-black">BEHAVIORAL_METRICS</div>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="bg-background/50 rounded p-2 border border-border">
+                  <div className="text-[9px] text-muted-foreground mb-0.5">PROFIT FACTOR</div>
+                  <div className="text-sm text-primary font-bold">{behaviorData.profitFactor.toFixed(2)}</div>
+                </div>
+                <div className="bg-background/50 rounded p-2 border border-border">
+                  <div className="text-[9px] text-muted-foreground mb-0.5">RISK/REWARD</div>
+                  <div className="text-sm text-foreground font-bold">{behaviorData.riskRewardRatio.toFixed(2)}</div>
+                </div>
+                <div className="bg-background/50 rounded p-2 border border-border">
+                  <div className="text-[9px] text-muted-foreground mb-0.5">STREAKS</div>
+                  <div className="text-sm text-foreground font-bold">
+                    <span className="text-primary">W{behaviorData.streaks.maxWin}</span>
+                    <span className="text-muted-foreground mx-1">/</span>
+                    <span className="text-accent-pink">L{behaviorData.streaks.maxLoss}</span>
+                  </div>
+                </div>
+                <div className="bg-background/50 rounded p-2 border border-border">
+                  <div className="text-[9px] text-muted-foreground mb-0.5">REVENGE TRADES</div>
+                  <div className={`text-sm font-bold ${behaviorData.revengeTradeCount > 3 ? 'text-accent-pink' : 'text-foreground'}`}>
+                    {behaviorData.revengeTradeCount}
+                  </div>
+                </div>
+              </div>
+              {behaviorData.insights.length > 0 && (
+                <div className="space-y-1.5">
+                  {behaviorData.insights.slice(0, 2).map((insight, i) => (
+                    <div key={i} className="text-[10px] text-muted-foreground flex items-start gap-1.5 bg-background/30 rounded px-2 py-1.5 border border-border/50">
+                      <Activity className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                      <span>{insight}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Top Market Metrics Grid (Mobile) */}
         <div className="px-2 pb-2">
           <div className="border border-border rounded bg-card overflow-hidden">
             <div className="h-8 border-b border-border flex items-center justify-between px-3 bg-black/20">
               <div className="flex items-center gap-2">
                 {/* Placeholder Icon */}
                 <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-                <span className="text-[10px] text-foreground font-bold tracking-widest">SOL-PERP METRICS</span>
+                <span className="text-[10px] text-foreground font-bold tracking-widest">{topMarketKey} METRICS</span>
               </div>
             </div>
             <div className="grid grid-cols-2 divide-x divide-y divide-border">
               <div className="p-3">
                 <div className="text-[10px] text-muted-foreground mb-0.5">REALIZED PNL</div>
-                <div className="text-sm text-primary font-bold">{solData?.pnl ? `+$${solData.pnl.toLocaleString()}` : '$0.00'}</div>
+                <div className={`text-sm font-bold ${topMarketData.pnl >= 0 ? 'text-primary' : 'text-accent-pink'}`}>{topMarketData.pnl >= 0 ? '+' : ''}${topMarketData.pnl.toLocaleString()}</div>
               </div>
               <div className="p-3">
-                <div className="text-[10px] text-muted-foreground mb-0.5">VOLUME (SOL)</div>
-                <div className="text-sm text-foreground">{solData.volume.toLocaleString()}</div>
+                <div className="text-[10px] text-muted-foreground mb-0.5">VOLUME</div>
+                <div className="text-sm text-foreground">{topMarketData.volume.toLocaleString()}</div>
               </div>
               <div className="p-3">
-                <div className="text-[10px] text-muted-foreground mb-0.5">AVG ENTRY</div>
-                <div className="text-sm text-foreground">$141.20</div>
+                <div className="text-[10px] text-muted-foreground mb-0.5">WIN RATE</div>
+                <div className="text-sm text-foreground">{topMarketData.winRate}%</div>
               </div>
               <div className="p-3">
                 <div className="text-[10px] text-muted-foreground mb-0.5">FEES PAID</div>
@@ -216,11 +264,11 @@ export default function AnalyticsPage() {
                   <span className="text-[10px] text-muted-foreground">ASIAN</span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-primary font-bold">${analyticsData?.sessionPerformance?.['Asian']?.pnl || 0}</span>
-                    <span className="text-[9px] text-muted-foreground/80">0%</span>
+                    <span className="text-[9px] text-muted-foreground/80">{analyticsData?.sessionPerformance?.['Asian']?.count || 0} trades</span>
                   </div>
                 </div>
                 <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary/60 w-[0%]"></div>
+                  <div className="h-full bg-primary/60" style={{ width: `${Math.min(100, Math.max(0, ((analyticsData?.sessionPerformance?.['Asian']?.pnl || 0) / (analyticsData?.totalPnl?.total || 1)) * 100))}%` }}></div>
                 </div>
               </div>
               <div>
@@ -228,11 +276,11 @@ export default function AnalyticsPage() {
                   <span className="text-[10px] text-muted-foreground">LONDON</span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-foreground font-bold">${analyticsData?.sessionPerformance?.['London']?.pnl || 0}</span>
-                    <span className="text-[9px] text-muted-foreground/80">0%</span>
+                    <span className="text-[9px] text-muted-foreground/80">{analyticsData?.sessionPerformance?.['London']?.count || 0} trades</span>
                   </div>
                 </div>
                 <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary/40 w-[0%]"></div>
+                  <div className="h-full bg-primary/40" style={{ width: `${Math.min(100, Math.max(0, ((analyticsData?.sessionPerformance?.['London']?.pnl || 0) / (analyticsData?.totalPnl?.total || 1)) * 100))}%` }}></div>
                 </div>
               </div>
               <div>
@@ -242,11 +290,11 @@ export default function AnalyticsPage() {
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-primary font-bold">${analyticsData?.sessionPerformance?.['New York']?.pnl || 0}</span>
-                    <span className="text-[9px] text-muted-foreground/80">0%</span>
+                    <span className="text-[9px] text-muted-foreground/80">{analyticsData?.sessionPerformance?.['New York']?.count || 0} trades</span>
                   </div>
                 </div>
                 <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary w-[0%]"></div>
+                  <div className="h-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, ((analyticsData?.sessionPerformance?.['New York']?.pnl || 0) / (analyticsData?.totalPnl?.total || 1)) * 100))}%` }}></div>
                 </div>
               </div>
             </div>
@@ -301,7 +349,6 @@ export default function AnalyticsPage() {
               </div>
             </motion.div>
 
-            {/* Max Drawdown Chart - Fixed Height to enable scrolling */}
             {/* Main Chart Section */}
             <motion.div variants={item} className="bg-card border border-border p-4 rounded m-4 mb-2 shrink-0 flex flex-col relative">
               {/* Chart Filters & Header */}
@@ -368,7 +415,9 @@ export default function AnalyticsPage() {
                 <div className="px-2">
                   <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-1">CUMULATIVE_PNL</div>
                   <div className="text-4xl sm:text-5xl font-mono text-primary font-bold tracking-tight shadow-primary/20 drop-shadow-sm">${analyticsData?.totalPnl?.total?.toFixed(2) || '0.00'}</div>
-                  <div className="text-[10px] font-mono text-muted-foreground mt-2">Date: 2026-02-09</div>
+                  <div className="text-[10px] font-mono text-muted-foreground mt-2">
+                    Realized: <span className="text-primary">${analyticsData?.totalPnl?.realized?.toFixed(2) || '0.00'}</span> · Unrealized: <span className="text-foreground">${analyticsData?.totalPnl?.unrealized?.toFixed(2) || '0.00'}</span>
+                  </div>
                 </div>
               </div>
 
@@ -384,8 +433,39 @@ export default function AnalyticsPage() {
               </div>
             </motion.div>
 
+            {/* Drawdown Chart (Desktop) */}
+            <motion.div variants={item} className="mx-4 mb-2 bg-card border border-border rounded p-4 shrink-0 relative h-56 flex flex-col overflow-hidden">
+              <div className="flex justify-between items-start mb-2 z-10">
+                <div>
+                  <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-black">MAX_DRAWDOWN</div>
+                  <div className="text-3xl text-accent-pink font-bold leading-none mt-1 font-mono">
+                    {analyticsData?.riskMetrics?.maxDrawdown || 0}%
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-[10px] font-mono text-muted-foreground">
+                    Sharpe: <span className="text-foreground">{analyticsData?.riskMetrics?.sharpeRatio?.toFixed(2) || '0.00'}</span>
+                  </div>
+                  <div className="text-[10px] font-mono text-muted-foreground">
+                    Sortino: <span className="text-foreground">{analyticsData?.riskMetrics?.sortinoRatio?.toFixed(2) || '0.00'}</span>
+                  </div>
+                  <div className="text-[9px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded border border-white/10 font-bold uppercase tracking-widest font-mono">
+                    DRAWDOWN
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 relative mt-2">
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
+                  <div className="w-full h-px border-t border-dashed border-muted-foreground"></div>
+                  <div className="w-full h-px border-t border-dashed border-muted-foreground"></div>
+                  <div className="w-full h-px border-t border-dashed border-muted-foreground"></div>
+                </div>
+                <DrawdownChart data={drawdownData} />
+              </div>
+            </motion.div>
+
             {/* Heatmap & Composition & Leaderboard */}
-            <motion.div variants={item} className="mx-4 mb-4 grid grid-cols-1 md:grid-cols-12 gap-2 shrink-0">
+            <motion.div variants={item} className="mx-4 mb-2 grid grid-cols-1 md:grid-cols-12 gap-2 shrink-0">
               {/* Heatmap */}
               <div className="md:col-span-6 lg:col-span-4 bg-card border border-border rounded p-4 h-75">
                 <Heatmap
@@ -409,30 +489,109 @@ export default function AnalyticsPage() {
               </div>
             </motion.div>
 
-            {/* SOL-PERP Metrics */}
+            {/* Behavioral Metrics (Desktop) */}
+            {behaviorData && (
+              <motion.div variants={item} className="mx-4 mb-2 border border-border rounded bg-card shrink-0 overflow-hidden">
+                <div className="h-10 border-b border-border flex items-center justify-between px-4 bg-muted/20">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-3.5 h-3.5 text-primary" />
+                    <span className="font-mono text-[10px] text-foreground font-bold tracking-widest">BEHAVIORAL_METRICS</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    {behaviorData.revengeTradeCount > 0 && (
+                      <span className="text-accent-pink flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        {behaviorData.revengeTradeCount} REVENGE TRADES
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-border">
+                  <div className="p-4">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Hash className="w-3 h-3 text-muted-foreground" />
+                      <div className="text-[10px] font-mono text-muted-foreground">EXPECTANCY</div>
+                    </div>
+                    <div className="text-lg font-mono text-primary font-bold">${behaviorData.expectancy.toFixed(2)}</div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Percent className="w-3 h-3 text-muted-foreground" />
+                      <div className="text-[10px] font-mono text-muted-foreground">WIN RATE</div>
+                    </div>
+                    <div className="text-lg font-mono text-foreground font-bold">{behaviorData.winRate}%</div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Zap className="w-3 h-3 text-muted-foreground" />
+                      <div className="text-[10px] font-mono text-muted-foreground">PROFIT FACTOR</div>
+                    </div>
+                    <div className="text-lg font-mono text-primary font-bold">{behaviorData.profitFactor.toFixed(2)}</div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Scale className="w-3 h-3 text-muted-foreground" />
+                      <div className="text-[10px] font-mono text-muted-foreground">RISK/REWARD</div>
+                    </div>
+                    <div className="text-lg font-mono text-foreground font-bold">{behaviorData.riskRewardRatio.toFixed(2)}</div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center gap-1 mb-1">
+                      <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                      <div className="text-[10px] font-mono text-muted-foreground">STREAKS</div>
+                    </div>
+                    <div className="text-lg font-mono font-bold">
+                      <span className="text-primary">W{behaviorData.streaks.maxWin}</span>
+                      <span className="text-muted-foreground mx-1">/</span>
+                      <span className="text-accent-pink">L{behaviorData.streaks.maxLoss}</span>
+                    </div>
+                    <div className="text-[9px] text-muted-foreground mt-0.5">Current: {behaviorData.streaks.current}W</div>
+                  </div>
+                </div>
+
+                {/* Insights */}
+                {behaviorData.insights.length > 0 && (
+                  <div className="border-t border-border px-4 py-3">
+                    <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2">INSIGHTS</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {behaviorData.insights.map((insight, i) => (
+                        <div key={i} className="text-[10px] font-mono text-muted-foreground flex items-start gap-2 bg-background/30 rounded px-3 py-2 border border-border/50">
+                          <Activity className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                          <span>{insight}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Top Market Metrics (Dynamic) */}
             <motion.div variants={item} className="mx-4 mb-10 border border-border rounded bg-card shrink-0 overflow-hidden">
               <div className="h-10 border-b border-border flex items-center justify-between px-4 bg-muted/20">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] text-foreground font-bold tracking-widest">SOL-PERP METRICS</span>
+                  <span className="font-mono text-[10px] text-foreground font-bold tracking-widest">{topMarketKey} METRICS</span>
                 </div>
-                <span className="text-[10px] font-mono text-muted-foreground">24H PERFORMANCE</span>
+                <span className="text-[10px] font-mono text-muted-foreground">{topMarketData.tradeCount} TRADES</span>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
                 <div className="p-4">
                   <div className="text-[10px] font-mono text-muted-foreground mb-1">REALIZED PNL</div>
-                  <div className="text-lg font-mono text-primary font-bold">{solData.pnl ? `+$${solData.pnl.toLocaleString()}` : '$0.00'}</div>
+                  <div className={`text-lg font-mono font-bold ${topMarketData.pnl >= 0 ? 'text-primary' : 'text-accent-pink'}`}>{topMarketData.pnl >= 0 ? '+' : ''}${topMarketData.pnl.toLocaleString()}</div>
                 </div>
                 <div className="p-4">
                   <div className="text-[10px] font-mono text-muted-foreground mb-1">TOTAL VOLUME</div>
-                  <div className="text-lg font-mono text-foreground">{solData.volume.toLocaleString()} SOL</div>
+                  <div className="text-lg font-mono text-foreground">{topMarketData.volume.toLocaleString()}</div>
                 </div>
                 <div className="p-4">
-                  <div className="text-[10px] font-mono text-muted-foreground mb-1">AVG ENTRY</div>
-                  <div className="text-lg font-mono text-foreground">$141.20</div>
+                  <div className="text-[10px] font-mono text-muted-foreground mb-1">WIN RATE</div>
+                  <div className="text-lg font-mono text-foreground">{topMarketData.winRate}%</div>
                 </div>
                 <div className="p-4">
                   <div className="text-[10px] font-mono text-muted-foreground mb-1">FEES PAID</div>
-                  <div className="text-lg font-mono text-pink">-${analyticsData.totalFees.toFixed(2)}</div>
+                  <div className="text-lg font-mono text-accent-pink">-${analyticsData.totalFees.toFixed(2)}</div>
                 </div>
               </div>
             </motion.div>

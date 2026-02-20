@@ -7,10 +7,16 @@ import {
     fetchPortfolioComposition,
     fetchHistoricalPnl,
     fetchDrawdown,
+    fetchBehavioralMetrics,
+    fetchTimeAnalysis,
+    fetchEquityCurve,
     ComprehensiveAnalytics,
     HeatmapData,
     LeaderboardEntry,
-    PortfolioCompositionItem
+    PortfolioCompositionItem,
+    BehavioralMetrics,
+    TimeAnalysisData,
+    EquityCurvePoint
 } from '@/lib/api'
 import {
     analyticsData as MOCK_ANALYTICS,
@@ -18,7 +24,10 @@ import {
     drawdownData as MOCK_DRAWDOWN,
     leaderboardData as MOCK_LEADERBOARD,
     portfolioCompositionData as MOCK_COMPOSITION,
-    heatmapData as MOCK_HEATMAP
+    heatmapData as MOCK_HEATMAP,
+    behavioralMetricsData as MOCK_BEHAVIOR,
+    timeAnalysisData as MOCK_TIME_ANALYSIS,
+    equityCurveMockData as MOCK_EQUITY_CURVE
 } from '@/lib/mock-data'
 
 export function useAnalytics(filters?: { market?: string; startDate?: Date; endDate?: Date }) {
@@ -101,6 +110,40 @@ export function useAnalytics(filters?: { market?: string; startDate?: Date; endD
         staleTime: 5 * 60 * 1000,
     })
 
+    // Behavioral Metrics Query
+    const behaviorQuery = useQuery({
+        queryKey: ['behavior', walletAddress],
+        queryFn: async () => {
+            if (isDemo) return MOCK_BEHAVIOR as BehavioralMetrics
+            return fetchBehavioralMetrics(walletAddress!)
+        },
+        staleTime: 5 * 60 * 1000,
+    })
+
+    // Time Analysis Query
+    const timeAnalysisQuery = useQuery({
+        queryKey: ['timeAnalysis', walletAddress, filters],
+        queryFn: async () => {
+            if (isDemo) return MOCK_TIME_ANALYSIS as TimeAnalysisData
+            const formatDate = (date?: Date) => date?.toISOString().split('T')[0]
+            return fetchTimeAnalysis(walletAddress!, {
+                startDate: formatDate(filters?.startDate),
+                endDate: formatDate(filters?.endDate)
+            })
+        },
+        staleTime: 5 * 60 * 1000,
+    })
+
+    // Equity Curve Query
+    const equityCurveQuery = useQuery({
+        queryKey: ['equityCurve', walletAddress],
+        queryFn: async () => {
+            if (isDemo) return MOCK_EQUITY_CURVE as EquityCurvePoint[]
+            return fetchEquityCurve(walletAddress!)
+        },
+        staleTime: 5 * 60 * 1000,
+    })
+
     const isLoading = query.isLoading || heatmapQuery.isLoading || leaderboardQuery.isLoading || compositionQuery.isLoading
 
     return {
@@ -110,6 +153,9 @@ export function useAnalytics(filters?: { market?: string; startDate?: Date; endD
         compositionData: compositionQuery.data || (isDemo ? MOCK_COMPOSITION as PortfolioCompositionItem[] : undefined),
         historicalPnlData: historicalPnlQuery.data || MOCK_PNL_HISTORY,
         drawdownData: drawdownQuery.data || MOCK_DRAWDOWN,
+        behaviorData: behaviorQuery.data || (isDemo ? MOCK_BEHAVIOR as BehavioralMetrics : undefined),
+        timeAnalysisData: timeAnalysisQuery.data || (isDemo ? MOCK_TIME_ANALYSIS as TimeAnalysisData : undefined),
+        equityCurveData: equityCurveQuery.data || (isDemo ? MOCK_EQUITY_CURVE as EquityCurvePoint[] : undefined),
         isLoading,
         isError: query.isError,
         error: query.error,

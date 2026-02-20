@@ -13,44 +13,51 @@ const mockData: PortfolioCompositionItem[] = [
 
 // Colors for the pie chart
 const COLORS = [
-    'var(--primary)',
-    '#3b82f6', // Blue
-    '#8b5cf6', // Purple
-    'var(--accent-pink)',
-    '#f59e0b', // Amber
-    '#10b981' // Emerald
+  'var(--primary)',
+  '#3b82f6', // Blue
+  '#8b5cf6', // Purple
+  'var(--accent-pink)',
+  '#f59e0b', // Amber
+  '#10b981' // Emerald
 ];
 
 interface CompositionChartProps {
-    data?: PortfolioCompositionItem[]
+  data?: PortfolioCompositionItem[]
 }
 
 export function CompositionChart({ data }: CompositionChartProps) {
   const chartData = data || mockData;
 
+  // Ensure every asset gets a minimum visible percentage for the chart
+  const normalizedData = chartData.map(item => ({
+    ...item,
+    displayPercentage: Math.max(item.percentage, 3) // minimum 3% visual slice
+  }));
+
   return (
     <div className="w-full h-full min-h-62.5 flex flex-col">
-       <div className="flex items-center justify-between mb-2 px-2">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">PORTFOLIO_COMPOSITION</span>
-            <span className="text-[10px] text-primary font-mono bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">LIVE</span>
-       </div>
+      <div className="flex items-center justify-between mb-2 px-2">
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">PORTFOLIO_COMPOSITION</span>
+        <span className="text-[10px] text-primary font-mono bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">LIVE</span>
+      </div>
       <div className="flex-1 relative">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={chartData}
+              data={normalizedData}
               cx="50%"
               cy="50%"
               innerRadius={60}
               outerRadius={80}
-              paddingAngle={5}
-              dataKey="value"
+              paddingAngle={2}
+              dataKey="displayPercentage"
               nameKey="market"
               stroke="none"
               startAngle={90}
               endAngle={450}
+              minAngle={8}
             >
-              {chartData.map((entry, index) => (
+              {normalizedData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -64,14 +71,17 @@ export function CompositionChart({ data }: CompositionChartProps) {
                 color: 'var(--foreground)'
               }}
               itemStyle={{ color: 'var(--foreground)' }}
-              formatter={(value?: number, name?: string) => [`${value?.toFixed(1) ?? '0.0'}%`, name]}
+              formatter={(_value: unknown, _name: unknown, props: any) => {
+                const original = chartData[props?.payload?.index ?? 0] || props.payload;
+                return [`${original.percentage?.toFixed(1) ?? '0.0'}% ($${original.value?.toLocaleString() ?? '0'})`, original.market];
+              }}
             />
-            <Legend 
-              verticalAlign="bottom" 
+            <Legend
+              verticalAlign="bottom"
               height={36}
               iconType="circle"
               iconSize={8}
-              formatter={(value, entry: any) => (
+              formatter={(value) => (
                 <span className="text-[10px] font-mono text-muted-foreground ml-1 uppercase">{value}</span>
               )}
             />
@@ -79,8 +89,8 @@ export function CompositionChart({ data }: CompositionChartProps) {
         </ResponsiveContainer>
         {/* Center Text Overlay */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-            <span className="text-2xl font-bold font-mono text-foreground">{chartData.length}</span>
-            <span className="text-[10px] text-muted-foreground font-mono uppercase">ASSETS</span>
+          <span className="text-2xl font-bold font-mono text-foreground">{chartData.length}</span>
+          <span className="text-[10px] text-muted-foreground font-mono uppercase">ASSETS</span>
         </div>
       </div>
     </div>

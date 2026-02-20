@@ -119,8 +119,8 @@ export interface ComprehensiveAnalytics {
     };
     avgTradeDuration: number;
     longShortRatio: number;
-    largestGain: number | null;
-    largestLoss: number | null;
+    largestGain: { amount: number; positionId: string; market: string } | null;
+    largestLoss: { amount: number; positionId: string; market: string } | null;
     avgWin: number;
     avgLoss: number;
     totalFees: number;
@@ -131,7 +131,7 @@ export interface ComprehensiveAnalytics {
         total: number;
     };
     sessionPerformance: Record<string, { pnl: number; count: number }>;
-    orderTypePerformance?: Record<string, { count: number; totalPnl: number; avgPnl: number }>;
+    orderTypePerformance?: Record<string, { pnl: number; count: number }>;
     marketPerformance: Record<string, { pnl: number; winRate: number; tradeCount: number; volume: number }>;
     riskMetrics: {
         sharpeRatio: number;

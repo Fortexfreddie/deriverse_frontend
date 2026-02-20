@@ -149,10 +149,10 @@ export const analyticsData = {
   },
   avgTradeDuration: 3.2,
   longShortRatio: 1.5,
-  largestGain: 420.00,
-  largestLoss: -150.00,
+  largestGain: { amount: 420.00, positionId: "pos-sol-01", market: "SOL-PERP" },
+  largestLoss: { amount: -150.00, positionId: "pos-btc-02", market: "BTC-PERP" },
   avgWin: 125.00,
-  avgLoss: 55.00,
+  avgLoss: -55.00,
   totalFees: 45.20,
   totalVolume: 89450.50,
   feeComposition: {
@@ -166,8 +166,8 @@ export const analyticsData = {
     "New York": { pnl: 524.80, count: 68 }
   },
   orderTypePerformance: {
-    MARKET: { count: 120, totalPnl: 850.50, avgPnl: 7.08 },
-    LIMIT: { count: 25, totalPnl: 400.00, avgPnl: 16.00 }
+    MARKET: { pnl: 850.50, count: 120 },
+    LIMIT: { pnl: 400.00, count: 25 }
   },
   marketPerformance: {
     "SOL-USDC": { pnl: 845.20, winRate: 72.0, tradeCount: 85, volume: 42050.00 },
@@ -226,6 +226,53 @@ export const drawdownData = Array.from({ length: 30 }, (_, i) => {
       month: "short",
       day: "numeric",
     }), // keeping for backward compatibility if any
+  }
+})
+
+// Behavioral Metrics Mock Data (matches /api/analytics/{wallet}/behavior)
+export const behavioralMetricsData = {
+  expectancy: 150.5,
+  winRate: 65.2,
+  profitFactor: 2.1,
+  riskRewardRatio: 1.5,
+  revengeTradeCount: 2,
+  streaks: { current: 3, maxWin: 5, maxLoss: 2 },
+  insights: [
+    "Strong win rate of 65.2% — above institutional average.",
+    "Revenge trade count is low. You're managing tilt well.",
+    "Current 3-win streak. Stay disciplined, don't get greedy.",
+    "Profit factor of 2.1 indicates a healthy edge.",
+  ]
+}
+
+// Time Analysis Mock Data (matches /api/analytics/{wallet}/time-analysis)
+export const timeAnalysisData = {
+  hourly: Array.from({ length: 24 }, (_, i) => ({
+    hour: i,
+    pnl: Math.round((Math.sin(i * 0.5) * 200 + Math.random() * 100 - 50) * 100) / 100,
+    trades: Math.floor(Math.random() * 8) + 1
+  })),
+  daily: [
+    { date: "2026-02-09", pnl: 144.80, trades: 3 },
+    { date: "2026-02-14", pnl: 1200.00, trades: 1 },
+    { date: "2026-02-15", pnl: -340.20, trades: 2 },
+    { date: "2026-02-16", pnl: -0.02, trades: 3 },
+    { date: "2026-02-17", pnl: 520.10, trades: 4 },
+    { date: "2026-02-18", pnl: -125.40, trades: 1 },
+  ]
+}
+
+// Equity Curve Mock Data (matches /api/analytics/{wallet}/equity-curve)
+export const equityCurveMockData = Array.from({ length: 30 }, (_, i) => {
+  const base = 10000
+  const trend = i * 50
+  const noise = Math.sin(i * 0.6) * 300 + Math.cos(i * 1.1) * 150
+  const equity = Math.round((base + trend + noise) * 100) / 100
+  return {
+    timestamp: new Date(2026, 0, 22 + i).toISOString(),
+    equity,
+    change: Math.round((trend + noise - (i > 0 ? (i - 1) * 50 + Math.sin((i - 1) * 0.6) * 300 : 0)) * 100) / 100,
+    market: i % 3 === 0 ? "BTC-PERP" : i % 2 === 0 ? "ETH-PERP" : "SOL-PERP"
   }
 })
 
