@@ -2,7 +2,9 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, History, BarChart2, BookOpen, Settings, Coins } from 'lucide-react'
+import { LayoutDashboard, History, BarChart2, BookOpen, Settings } from 'lucide-react'
+import Image from 'next/image'
+import deriverseLogo from '../app/deriverse.png'
 
 interface SidebarProps {
   activeNav: string
@@ -21,8 +23,8 @@ export function Sidebar({ activeNav, onNavChange }: SidebarProps) {
   return (
     <aside className="w-16 h-full border-r border-border flex flex-col items-center py-6 bg-card z-20 flex-shrink-0">
       {/* Logo */}
-      <div className="mb-8 w-8 h-8 flex items-center justify-center bg-pnl-gain/10 rounded border border-pnl-gain/30 text-pnl-gain">
-        <Coins size={20} />
+      <div className="mb-8 flex items-center justify-center">
+        <Image src={deriverseLogo} alt="Deriverse Logo" width={32} height={32} className="rounded" />
       </div>
 
       {/* Main Nav */}
@@ -32,12 +34,11 @@ export function Sidebar({ activeNav, onNavChange }: SidebarProps) {
             key={item.id}
             href={item.href}
             onClick={() => onNavChange(item.id)}
-            className={`group w-10 h-10 flex items-center justify-center rounded transition-colors relative ${
-              activeNav === item.id
+            className={`group w-10 h-10 flex items-center justify-center rounded transition-colors relative ${activeNav === item.id
                 ? 'bg-muted text-pnl-gain'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-            }`}
-            // title={item.label}
+              }`}
+          // title={item.label}
           >
             <item.icon size={20} />
             {/* Tooltip */}
